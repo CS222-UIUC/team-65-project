@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 
-RUN npm install axios react-router-dom
+RUN npm install
 
 COPY . .
 
