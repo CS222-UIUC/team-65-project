@@ -1,24 +1,70 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
+import axios from "axios";
+import Map from "./components/Map";
+import { Provider } from "./components/ui/provider";
+import { Heading, VStack, Text } from "@chakra-ui/react";
 
-function App() {
+function App({ Component, pageProps }) {
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+  const [stops, setStops] = useState([]);
+  const [route, setRoute] = useState(null);
+
+  const handleAddStop = () => {
+    setStops([...stops, ""]);
+  };
+
+  const handleStopChange = (index, value) => {
+    const newStops = [...stops];
+    newStops[index] = value;
+    setStops(newStops);
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const response = await axios.post("http://127.0.0.1:5000/get_route", {
+        start,
+        end,
+        stops,
+      });
+      setRoute(response.data);
+    } catch (error) {
+      console.error("Error fetching route:", error);
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Provider>
+      <VStack>
+        <Heading>Trip Planner</Heading>
+        <input
+          type="text"
+          placeholder="Start Location"
+          value={start}
+          onChange={(e) => setStart(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="End Location"
+          value={end}
+          onChange={(e) => setEnd(e.target.value)}
+        />
+
+        <Text>Stops:</Text>
+        {stops.map((stop, index) => (
+          <input
+            key={index}
+            type="text"
+            placeholder="Stop"
+            value={stop}
+            onChange={(e) => handleStopChange(index, e.target.value)}
+          />
+        ))}
+        <button onClick={handleAddStop}>+ Add Stop</button>
+        <button onClick={handleSubmit}>Get Route</button>
+        <Map route={route} />
+      </VStack>
+    </Provider>
   );
 }
 
