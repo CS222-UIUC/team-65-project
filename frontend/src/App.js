@@ -1,55 +1,39 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
 import Map from "./components/Map";
 
 function App() {
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
-  const [stops, setStops] = useState([]);
-  const [route, setRoute] = useState(null);
+  const [routeData, setRouteData] = useState(null);
+  const [error, setError] = useState(null);
+  const startLocation = "Champaign, IL";
+  const endLocation = "Chicago, IL";
+  const stopType = "coffee shop";
 
-  const handleAddStop = () => {
-    setStops([...stops, ""]);
-  };
+  useEffect(() => {
+    const fetchRouteData = async () => {
+      try {
+        const response = await fetch(
+          http://localhost:5000/route?start=${encodeURIComponent(startLocation)}&end=${encodeURIComponent(endLocation)}&stop_type=${encodeURIComponent(stopType)}
+        );
+        const data = await response.json();
+        if (data.error) {
+          setError(data.error);
+        } else {
+          setRouteData(data);
+        }
+      } catch (err) {
+        setError("Failed to fetch route data");
+        console.error("Error fetching route data:", err);
+      }
+    };
 
-  const handleStopChange = (index, value) => {
-    const newStops = [...stops];
-    newStops[index] = value;
-    setStops(newStops);
-  };
-
-  const handleSubmit = async () => {
-    try {
-      const response = await axios.post("http://127.0.0.1:5000/get_route", {
-        start,
-        end,
-        stops,
-      });
-      setRoute(response.data);
-    } catch (error) {
-      console.error("Error fetching route:", error);
-    }
-  };
+    fetchRouteData();
+  }, []);
 
   return (
     <div>
-      <h1>Trip Planner</h1>
-      <input type="text" placeholder="Start Location" value={start} onChange={(e) => setStart(e.target.value)} />
-      <input type="text" placeholder="End Location" value={end} onChange={(e) => setEnd(e.target.value)} />
-
-      <h3>Stops:</h3>
-      {stops.map((stop, index) => (
-        <input
-          key={index}
-          type="text"
-          placeholder="Stop"
-          value={stop}
-          onChange={(e) => handleStopChange(index, e.target.value)}
-        />
-      ))}
-      <button onClick={handleAddStop}>+ Add Stop</button>
-      <button onClick={handleSubmit}>Get Route</button>
-      <Map route={route} />
+      <h1>Route Map</h1>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      {routeData ? <Map route={routeData} /> : <p>Loading route data...</p>}
     </div>
   );
 }
