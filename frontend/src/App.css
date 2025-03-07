@@ -36,3 +36,36 @@
     transform: rotate(360deg);
   }
 }
+
+h1 {
+  font-size: 30px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.stopsTitle {
+  font-size: 20px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.textBox {
+  width: 15%;
+  margin: 0% auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+
+}
+
+.stopTextBox {
+  width: 10%;
+  margin: 0% auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.input_start_end {
+  text-align: center;
+}

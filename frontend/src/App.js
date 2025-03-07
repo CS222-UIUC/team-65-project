@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import Map from "./components/Map";
 
+import './App.css';
+
 function App() {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
@@ -33,13 +35,20 @@ function App() {
 
   return (
     <div>
-      <h1>Trip Planner</h1>
-      <input type="text" placeholder="Start Location" value={start} onChange={(e) => setStart(e.target.value)} />
-      <input type="text" placeholder="End Location" value={end} onChange={(e) => setEnd(e.target.value)} />
+      <h1 className = "title">Trip Planner</h1>
+      
+      <div className = 'input_start_end'>
+      <input className = 'textBox' type="text" placeholder="Start Location" value={start} onChange={(e) => setStart(e.target.value)} />
+      <input className = 'textBox' type="text" placeholder="End Location" value={end} onChange={(e) => setEnd(e.target.value)} />
+      </div>
+  
+      <h3 className = 'stopsTitle'>Stops:</h3>
 
-      <h3>Stops:</h3>
+      <div className = 'input_start_end'>
+
       {stops.map((stop, index) => (
         <input
+          className = 'stopTextBox'
           key={index}
           type="text"
           placeholder="Stop"
@@ -49,6 +58,9 @@ function App() {
       ))}
       <button onClick={handleAddStop}>+ Add Stop</button>
       <button onClick={handleSubmit}>Get Route</button>
+
+      </div>
+
       <Map route={route} />
     </div>
   );
