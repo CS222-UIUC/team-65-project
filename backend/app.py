@@ -9,9 +9,6 @@ CORS(app)
 OSRM_SERVER = "http://router.project-osrm.org"
 
 def get_coordinates(location):
-    """
-    Convert a location (address or place name) to coordinates using Nominatim API.
-    """
     headers = {"User-Agent": "TripPlannerApp"}
     encoded_location = quote(location)
     nominatim_url = f"https://nominatim.openstreetmap.org/search?q={encoded_location}&format=json"
@@ -20,8 +17,46 @@ def get_coordinates(location):
         location_data = response.json()[0]
         return float(location_data["lat"]), float(location_data["lon"])
     
-    print(f"Error fetching coordinates for {location}: {response.text}")
     return None
+
+@app.route("/find_places", methods=["POST"])
+def find_places():
+    data = request.json
+    place_type = data.get("place_type")
+    user_location = data.get("location")
+    route = data.get("route")
+
+    if not place_type:
+        return jsonify({"error": "Place type is required"}), 400
+
+    headers = {"User-Agent": "TripPlannerApp"}
+
+    if route:
+        # Find places along the route by taking midpoints
+        waypoints = route.get("routes", [])[0].get("geometry", {}).get("coordinates", [])
+        midpoints = waypoints[:: max(1, len(waypoints) // 5)]  # Get every 1/5th point along route
+        places = []
+        for lon, lat in midpoints:
+            encoded_query = quote(f"{place_type} near {lat},{lon}")
+            nominatim_url = f"https://nominatim.openstreetmap.org/search?q={encoded_query}&format=json"
+            response = requests.get(nominatim_url, headers=headers)
+            if response.status_code == 200 and response.json():
+                places.extend([{"name": p["display_name"], "lat": float(p["lat"]), "lon": float(p["lon"])}
+                               for p in response.json()[:3]])  # Limit to 3 per location
+        return jsonify(places)
+
+    elif user_location:
+        lat, lon = user_location["lat"], user_location["lon"]
+        encoded_query = quote(f"{place_type} near {lat},{lon}")
+        nominatim_url = f"https://nominatim.openstreetmap.org/search?q={encoded_query}&format=json"
+        response = requests.get(nominatim_url, headers=headers)
+
+        if response.status_code == 200 and response.json():
+            places = [{"name": p["display_name"], "lat": float(p["lat"]), "lon": float(p["lon"])}
+                      for p in response.json()]
+            return jsonify(places)
+
+    return jsonify({"error": "No results found"}), 404
 
 @app.route("/get_route", methods=["POST"])
 def get_route():
