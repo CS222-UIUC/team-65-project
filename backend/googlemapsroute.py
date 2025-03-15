@@ -50,17 +50,23 @@ def find_stops_along_route(start, end, stop_type, num_samples=10):
         places_response = requests.get(places_url)
         places_data = places_response.json()
 
-        # Only choose the first stop from the results, if available.
         if places_data.get('status') == 'OK' and places_data.get('results'):
-            result = places_data['results'][0]
-            place_id = result.get('place_id')
+            # Sort the results by rating (use 0 if rating is missing) 
+            sorted_results = sorted(
+                places_data['results'], 
+                key=lambda x: x.get('rating', 0), 
+                reverse=True
+            )
+            best_result = sorted_results[0]
+            place_id = best_result.get('place_id')
             if place_id not in stops:
                 stops[place_id] = {
-                    'name': result.get('name'),
-                    'location': result.get('geometry', {}).get('location'),
-                    'rating': result.get('rating', 'N/A'),
-                    'vicinity': result.get('vicinity')
+                    'name': best_result.get('name'),
+                    'location': best_result.get('geometry', {}).get('location'),
+                    'rating': best_result.get('rating', 'N/A'),
+                    'vicinity': best_result.get('vicinity')
                 }
+
 
     return {
         'route': route_points,
