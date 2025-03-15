@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Map from "./components/Map";
-import './App.css';
-
-function App() {
+import "./App.css";
+import { Provider } from "./components/ui/provider";
+import { VStack } from "@chakra-ui/react";
+function App({ Component, pageProps }) {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [stops, setStops] = useState([]);
@@ -13,7 +14,7 @@ function App() {
   const [userLocation, setUserLocation] = useState({
     lat: 40.1164,
     lon: -88.2434,
-    name: "Champaign, IL (Default)"
+    name: "Champaign, IL (Default)",
   });
 
   // Get User's Current Location
@@ -22,7 +23,7 @@ function App() {
       (position) => {
         setUserLocation({
           lat: position.coords.latitude,
-          lon: position.coords.longitude
+          lon: position.coords.longitude,
         });
       },
       (error) => {
@@ -67,7 +68,10 @@ function App() {
         return;
       }
 
-      const response = await axios.post("http://127.0.0.1:5000/find_places", requestData);
+      const response = await axios.post(
+        "http://127.0.0.1:5000/find_places",
+        requestData
+      );
       setFoundPlaces(response.data);
     } catch (error) {
       console.error("Error fetching places:", error);
@@ -79,60 +83,76 @@ function App() {
   };
 
   return (
-    <div>
-      <h1 className="title">Trip Planner</h1>
+    <Provider>
+      <VStack spacing={8}>
+        <h1 className="title">Trip Planner</h1>
 
-      <div className='input_start_end'>
-        <input className='textBox' type="text" placeholder="Start Location" value={start} onChange={(e) => setStart(e.target.value)} />
-        <input className='textBox' type="text" placeholder="End Location" value={end} onChange={(e) => setEnd(e.target.value)} />
-      </div>
-
-      <h3 className='stopsTitle'>Stops:</h3>
-      <div className='input_start_end'>
-        {stops.map((stop, index) => (
+        <div className="input_start_end">
           <input
-            className='stopTextBox'
-            key={index}
+            className="textBox"
             type="text"
-            placeholder="Stop"
-            value={stop}
-            onChange={(e) => handleStopChange(index, e.target.value)}
+            placeholder="Start Location"
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
           />
-        ))}
-        <button onClick={handleAddStop}>+ Add Stop</button>
-        <button onClick={handleSubmit}>Get Route</button>
-      </div>
-
-      {/* Find Places Feature */}
-      <h3 className='stopsTitle'>Find Places:</h3>
-      <div className='input_start_end'>
-        <input
-          className='textBox'
-          type="text"
-          placeholder="Search for places (e.g., gas stations, coffee shops)"
-          value={placeType}
-          onChange={(e) => setPlaceType(e.target.value)}
-        />
-        <button onClick={handleFindPlaces}>Find Places</button>
-      </div>
-
-      {/* Display Found Places */}
-      {foundPlaces.length > 0 && (
-        <div>
-          <h3>Suggested Places:</h3>
-          <ul className="found-places-list">
-            {foundPlaces.map((place, index) => (
-              <li key={index}>
-                {place.name} ({place.lat}, {place.lon})
-                <button onClick={() => addPlaceToStops(place)}>Add to Stops</button>
-              </li>
-            ))}
-          </ul>
+          <input
+            className="textBox"
+            type="text"
+            placeholder="End Location"
+            value={end}
+            onChange={(e) => setEnd(e.target.value)}
+          />
         </div>
-      )}
 
-      <Map route={route} />
-    </div>
+        <h3 className="stopsTitle">Stops:</h3>
+        <div className="input_start_end">
+          {stops.map((stop, index) => (
+            <input
+              className="stopTextBox"
+              key={index}
+              type="text"
+              placeholder="Stop"
+              value={stop}
+              onChange={(e) => handleStopChange(index, e.target.value)}
+            />
+          ))}
+          <button onClick={handleAddStop}>+ Add Stop</button>
+          <button onClick={handleSubmit}>Get Route</button>
+        </div>
+
+        {/* Find Places Feature */}
+        <h3 className="stopsTitle">Find Places:</h3>
+        <div className="input_start_end">
+          <input
+            className="textBox"
+            type="text"
+            placeholder="Search for places (e.g., gas stations, coffee shops)"
+            value={placeType}
+            onChange={(e) => setPlaceType(e.target.value)}
+          />
+          <button onClick={handleFindPlaces}>Find Places</button>
+        </div>
+
+        {/* Display Found Places */}
+        {foundPlaces.length > 0 && (
+          <div>
+            <h3>Suggested Places:</h3>
+            <ul className="found-places-list">
+              {foundPlaces.map((place, index) => (
+                <li key={index}>
+                  {place.name} ({place.lat}, {place.lon})
+                  <button onClick={() => addPlaceToStops(place)}>
+                    Add to Stops
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <Map route={route} />
+      </VStack>
+    </Provider>
   );
 }
 
