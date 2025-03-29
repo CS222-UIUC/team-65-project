@@ -9,8 +9,6 @@ on:
 jobs:
   vitest:
     runs-on: ubuntu-latest
-    strategy:
-      
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
