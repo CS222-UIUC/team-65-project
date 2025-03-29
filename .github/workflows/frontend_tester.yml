@@ -1,28 +1,38 @@
-name: Run React Tests
+name: Frontend Test
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        node: [14.x, 16.x]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
         with:
-          node-version: '18' 
+          node-version: ${{ matrix.node }}
 
-      - name: Install dependencies
+      - name: Cache Node Modules
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install Dependencies
         working-directory: ./frontend
         run: npm install
 
-      - name: Run tests
+      - name: Run Tests
         working-directory: ./frontend
         run: npm test -- --watchAll=false
