@@ -26,4 +26,4 @@ jobs:
       - name: Run Vitest Tests
         run: |
           cd frontend
-          npx vitest run
+          npm test
