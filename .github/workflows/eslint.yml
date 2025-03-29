@@ -2,7 +2,7 @@ name: ESLint Check
 
 on:
   pull_request:
-    branches: [ main ]  # or your default branch
+    branches: [ main ]
   push:
     branches: [ main ]
 
@@ -17,11 +17,12 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18' # or your desired Node version
+          node-version: '18'
 
-      - name: Install dependencies
+      - name: Install dependencies in frontend
+        working-directory: ./frontend
         run: npm install
 
-      - name: Run ESLint
-        run: npx eslint . \
-          --ext .js,.jsx,.ts,.tsx 
+      - name: Run ESLint in frontend
+        working-directory: ./frontend
+        run: npx eslint . --ext .js,.jsx,.ts,.tsx
