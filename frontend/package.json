@@ -48,7 +48,7 @@
   },
   "jest": {
     "transformIgnorePatterns": [
-      "/node_modules/(?!react-leaflet|@react-leaflet/core|leaflet)"
+      "/node_modules/(?!react-leaflet|@react-leaflet/core|leaflet|axios|@babel/runtime)"
     ],
     "moduleNameMapper": {
       "\\.(css|less|scss|sass)$": "identity-obj-proxy"
