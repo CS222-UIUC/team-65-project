@@ -52,14 +52,19 @@ def find_stops_along_route(start, end, stop_type, num_samples=10):
 
         # Only choose the first stop from the results, if available.
         if places_data.get('status') == 'OK' and places_data.get('results'):
-            result = places_data['results'][0]
-            place_id = result.get('place_id')
+            # Choose the best result based on rating and the number of reviews.
+            best_result = max(
+                places_data['results'],
+                key=lambda result: (result.get('rating', 0), result.get('user_ratings_total', 0))
+            )
+            place_id = best_result.get('place_id')
             if place_id not in stops:
                 stops[place_id] = {
-                    'name': result.get('name'),
-                    'location': result.get('geometry', {}).get('location'),
-                    'rating': result.get('rating', 'N/A'),
-                    'vicinity': result.get('vicinity')
+                    'name': best_result.get('name'),
+                    'location': best_result.get('geometry', {}).get('location'),
+                    'rating': best_result.get('rating', 'N/A'),
+                    'user_ratings_total': best_result.get('user_ratings_total', 'N/A'),
+                    'vicinity': best_result.get('vicinity')
                 }
 
     return {
