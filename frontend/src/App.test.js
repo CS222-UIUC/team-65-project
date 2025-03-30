@@ -16,8 +16,16 @@ const mockGeolocation = {
 
 global.navigator.geolocation = mockGeolocation;
 
-test('renders learn react link', () => {
+test('renders Trip Planner title', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  const titleElement = screen.getByText(/Trip Planner/i);
+  expect(titleElement).toBeInTheDocument();
+});
+
+test('renders input fields for start and end locations', () => {
+  render(<App />);
+  const startInput = screen.getByPlaceholderText(/Start Location/i);
+  const endInput = screen.getByPlaceholderText(/End Location/i);
+  expect(startInput).toBeInTheDocument();
+  expect(endInput).toBeInTheDocument();
 });
