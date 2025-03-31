@@ -1,5 +1,6 @@
 import requests
 import polyline
+import logging
 from dotenv import load_dotenv
 import os
 
@@ -7,36 +8,23 @@ load_dotenv()  # Load environment variables from .env
 
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_KEY")
 
-def find_stops_along_route(start, end, stop_type, num_samples=10):
-    """
-    Finds stops of a given type along the route from start to end.
 
-    Parameters:
-        start (str): start location.
-        end (str): destination location.
-        stop_type (str): Type of stop to look for.
-        num_samples (int): Number of stops to sample along the route.
 
-    Returns:
-        dict: A dictionary containing the route (list of (lat, lng) tuples)
-              and stops (list of dictionaries with details about each stop).
-    """
-    # Get route
+def get_route(start, end):
     directions_url = (
         f"https://maps.googleapis.com/maps/api/directions/json?"
         f"origin={start}&destination={end}&key={GOOGLE_MAPS_API_KEY}"
     )
-    directions_response = requests.get(directions_url)
-    directions_data = directions_response.json()
+    print(directions_url)
+    response = requests.get(directions_url)
+    data = response.json()
+    if data.get('status') != 'OK':
+        print("Could not find route.")
+    route_polyline = data['routes'][0]['overview_polyline']['points']
+    return polyline.decode(route_polyline)
 
-    if directions_data.get('status') != 'OK':
-        raise ValueError("Could not find route. Check your input or API key.")
-
-    # Decode polyline into coordinates
-    route_polyline = directions_data['routes'][0]['overview_polyline']['points']
-    route_points = polyline.decode(route_polyline)
-
-    # Sample points along the route - make distance based eventually
+def sample_route_points(route_points, num_samples):
+    # might want to do distance between points
     sample_interval = max(1, int(len(route_points) / num_samples))
     sample_points = route_points[::sample_interval]
 
@@ -68,12 +56,44 @@ def find_stops_along_route(start, end, stop_type, num_samples=10):
                 }
 
 
+    return route_points[::sample_interval]
+
+def get_stop_nearby(lat, lng, stop_type, radius=500):
+    places_url = (
+        f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
+        f"location={lat},{lng}&radius={radius}&keyword={stop_type}&key={GOOGLE_MAPS_API_KEY}"
+    )
+    response = requests.get(places_url)
+    data = response.json()
+    if data.get('status') != 'OK' or not data.get('results'):
+        return None
+    best_result = max(
+        data['results'],
+        key=lambda result: (result.get('rating', 0), result.get('user_ratings_total', 0))
+    )
     return {
-        'route': route_points,
-        'stops': list(stops.values())
+        'place_id': best_result.get('place_id'),
+        'name': best_result.get('name'),
+        'location': best_result.get('geometry', {}).get('location'),
+        'rating': best_result.get('rating', 'N/A'),
+        'user_ratings_total': best_result.get('user_ratings_total', 'N/A'),
+        'vicinity': best_result.get('vicinity')
     }
 
-# Example usage for testing the function.
+def find_stops_along_route(start, end, stop_type, num_samples=10, radius=500):
+    """
+    Finds stops of a given type along the route from start to end.
+    """
+    route_points = get_route(start, end)
+    sample_points = sample_route_points(route_points, num_samples)
+    
+    stops = {}
+    for lat, lng in sample_points:
+        stop = get_stop_nearby(lat, lng, stop_type, radius)
+        if stop and stop['place_id'] not in stops:
+            stops[stop['place_id']] = stop
+    return {'route': route_points, 'stops': list(stops.values())}
+
 if __name__ == '__main__':
     start_location = "Champaign, IL"
     end_location = "Chicago, IL"
@@ -88,3 +108,4 @@ if __name__ == '__main__':
             print(stop)
     except Exception as e:
         print("Error:", e)
+
