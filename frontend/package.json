@@ -43,11 +43,15 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^8.57.1",
-    "jsdom": "^26.0.0"
+    "jsdom": "^26.0.0",
+    "identity-obj-proxy": "^3.0.0"
   },
   "jest": {
     "transformIgnorePatterns": [
-      "/node_modules/(?!axios|react-leaflet|@react-leaflet)"
-    ]
+      "/node_modules/(?!react-leaflet|@react-leaflet/core|leaflet|axios|@babel/runtime)"
+    ],
+    "moduleNameMapper": {
+      "\\.(css|less|scss|sass)$": "identity-obj-proxy"
+    }
   }
 }
