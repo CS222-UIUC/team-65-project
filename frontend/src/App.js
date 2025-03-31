@@ -4,6 +4,7 @@ import Map from "./components/Map";
 import "./App.css";
 import { Provider } from "./components/ui/provider";
 import { VStack } from "@chakra-ui/react";
+import Navbar from "./components/NavBar2.tsx";
 function App({ Component, pageProps }) {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
@@ -84,6 +85,7 @@ function App({ Component, pageProps }) {
 
   return (
     <Provider>
+      <Navbar />
       <VStack spacing={8}>
         <h1 className="title">Trip Planner</h1>
 
