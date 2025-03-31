@@ -78,6 +78,22 @@ function App() {
     setStops([...stops, place.name]);
   };
 
+  // export the route to a google maps link
+  const exportToGoogleMaps = () => {
+    if (!route) {
+      alert("No route to export.");
+      return;
+    }
+
+    const waypoints = stops.map(stop => encodeURIComponent(stop)).join('|');
+    const startLocation = encodeURIComponent(start);
+    const endLocation = encodeURIComponent(end);
+
+    const googleMapsUrl = `https://www.google.com/maps/dir/${startLocation}/${waypoints}/${endLocation}/@${route.lat},${route.lon},12z`;
+
+    window.open(googleMapsUrl, '_blank');
+  };
+
   return (
     <div>
       <h1 className="title">Trip Planner</h1>
@@ -101,6 +117,7 @@ function App() {
         ))}
         <button onClick={handleAddStop}>+ Add Stop</button>
         <button onClick={handleSubmit}>Get Route</button>
+        <button onClick={exportToGoogleMaps}>Export to Google Maps</button>
       </div>
 
       {/* Find Places Feature */}
