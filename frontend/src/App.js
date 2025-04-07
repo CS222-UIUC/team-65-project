@@ -95,60 +95,99 @@ function App() {
   };
 
   return (
-    <div>
-      <h1 className="title">Trip Planner</h1>
+    <div className="app-container">
+      <header className="header">
+        <h1 className="title">Trip Planner</h1>
+      </header>
 
-      <div className='input_start_end'>
-        <input className='textBox' type="text" placeholder="Start Location" value={start} onChange={(e) => setStart(e.target.value)} />
-        <input className='textBox' type="text" placeholder="End Location" value={end} onChange={(e) => setEnd(e.target.value)} />
-      </div>
+      <main className="main-content">
 
-      <h3 className='stopsTitle'>Stops:</h3>
-      <div className='input_start_end'>
-        {stops.map((stop, index) => (
-          <input
-            className='stopTextBox'
-            key={index}
-            type="text"
-            placeholder="Stop"
-            value={stop}
-            onChange={(e) => handleStopChange(index, e.target.value)}
-          />
-        ))}
-        <button onClick={handleAddStop}>+ Add Stop</button>
-        <button onClick={handleSubmit}>Get Route</button>
-        <button onClick={exportToGoogleMaps}>Export to Google Maps</button>
-      </div>
 
-      {/* Find Places Feature */}
-      <h3 className='stopsTitle'>Find Places:</h3>
-      <div className='input_start_end'>
-        <input
-          className='textBox'
-          type="text"
-          placeholder="Search for places (e.g., gas stations, coffee shops)"
-          value={placeType}
-          onChange={(e) => setPlaceType(e.target.value)}
-        />
-        <button onClick={handleFindPlaces}>Find Places</button>
-      </div>
+      <div class = "box1">
+          {/* Start and End Locations */}
+          <section className="section">
+            <h2 className="section-title">Plan Your Trip</h2>
+            <div className="input-group">
+              <input
+                className="textBox"
+                type="text"
+                placeholder="Start Location"
+                value={start}
+                onChange={(e) => setStart(e.target.value)}
+              />
+              <input
+                className="textBox"
+                type="text"
+                placeholder="End Location"
+                value={end}
+                onChange={(e) => setEnd(e.target.value)}
+              />
+            </div>
+          </section>
+    
+          {/* Stops */}
+          <section className="section">
+            <h2 className="section-title">Stops</h2>
+            <div className="stops-container">
+              {stops.map((stop, index) => (
+                <input
+                  className="stopTextBox"
+                  key={index}
+                  type="text"
+                  placeholder={`Stop ${index + 1}`}
+                  value={stop}
+                  onChange={(e) => handleStopChange(index, e.target.value)}
+                />
+              ))}
+              <div className="button-group">
+                <button className="button" onClick={handleAddStop}>+ Add Stop</button>
+                <button className="button primary" onClick={handleSubmit}>Get Route</button>
+                <button className="button secondary" onClick={exportToGoogleMaps}>Export to Google Maps</button>
+              </div>
+            </div>
+          </section>
+    
+          {/* Find Places */}
+          <section className="section">
+            <h2 className="section-title">Find Places</h2>
+            <div className="input-group">
+              <input
+                className="textBox"
+                type="text"
+                placeholder="Search for places (e.g., gas stations, coffee shops)"
+                value={placeType}
+                onChange={(e) => setPlaceType(e.target.value)}
+              />
+              <button className="button primary" onClick={handleFindPlaces}>Find Places</button>
+            </div>
+          </section>
+    
+          {/* Display Found Places */}
+          {foundPlaces.length > 0 && (
+            <section className="section">
+              <h2 className="section-title">Suggested Places</h2>
+              <ul className="found-places-list">
+                {foundPlaces.map((place, index) => (
+                  <li key={index} className="place-item">
+                    <span>{place.name} ({place.lat}, {place.lon})</span>
+                    <button className="button small" onClick={() => addPlaceToStops(place)}>Add to Stops</button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
-      {/* Display Found Places */}
-      {foundPlaces.length > 0 && (
-        <div>
-          <h3>Suggested Places:</h3>
-          <ul className="found-places-list">
-            {foundPlaces.map((place, index) => (
-              <li key={index}>
-                {place.name} ({place.lat}, {place.lon})
-                <button onClick={() => addPlaceToStops(place)}>Add to Stops</button>
-              </li>
-            ))}
-          </ul>
+    </div>
+  
+        {/* Map */}
+        <div class = "box2">
+          <section className="section">
+            <h2 className="section-title">Route Map</h2>
+            <Map className = "map-section" route={route} />
+          </section>
         </div>
-      )}
 
-      <Map route={route} />
+      </main>
     </div>
   );
 }
