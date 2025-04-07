@@ -4,24 +4,31 @@ import { Link as ScrollLink } from "react-scroll";
 
 function NavBar() {
   return (
-    <Box h="50px">
-      <HStack h={16} alignItems="center" w="90%" ml="2%">
-        <Flex>
-          <ScrollLink to="home" smooth={true} duration={500} offset={-40}>
-            <Link px={2} py={1} rounded="md" color="white">
-              Home
-            </Link>
-          </ScrollLink>
-        </Flex>
-        {/* <Flex>
-          <ScrollLink to="experience" smooth={true} duration={500} offset={40}>
-            <Link px={2} py={1} rounded="md" color="white">
-              Experience
-            </Link>
-          </ScrollLink>
-        </Flex> */}
-      </HStack>
-    </Box>
+    <Flex
+      as="nav"
+      position="fixed"
+      top={0}
+      width="100%"
+      bg="rgba(0, 0, 0, 0.8)"
+      backdropFilter="blur(10px)"
+      color="white"
+      py={3}
+      px={5}
+      justifyContent="center"
+      alignItems="center"
+      boxShadow="md"
+    >
+      <ScrollLink to="home" smooth={true} duration={500} offset={-40}>
+        <Link
+          px={4}
+          py={2}
+          rounded="md"
+          _hover={{ bg: "whiteAlpha.300", transition: "0.3s" }}
+        >
+          Home
+        </Link>
+      </ScrollLink>
+    </Flex>
   );
-}
+};
 export default NavBar;
