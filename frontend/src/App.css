@@ -1,7 +1,7 @@
 /* General Styles */
 
 body {
-  background-image: url('/Users/lambdababa/Desktop/UIUC/team-65-project/frontend/src/media/back.jpeg');
+  background-image: url('./back.jpeg');
   background-size: cover;
   background-repeat: no-repeat;
   background-attachment: fixed;
