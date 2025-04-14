@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from urllib.parse import quote
 import requests
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -57,6 +58,31 @@ def find_places():
             return jsonify(places)
 
     return jsonify({"error": "No results found"}), 404
+
+from llm import suggest_stops  
+
+@app.route("/llm_chat", methods=["POST"])
+def llm_chat():
+    # data = request.json
+    # user_message = data.get("message", "")
+    user_message = {
+        "start": "Chicago, IL",
+        "end": "New York, NY"
+    }
+
+    if not user_message:
+        return jsonify({"error": "Message is required"}), 400
+
+    try:
+        # Use the LLM function to generate a response
+        #response = suggest_stops({"start": user_message, "end": ""})
+        response = suggest_stops(user_message)
+        if response["success"]:
+            return jsonify({"response": response["suggestions"][0]["name"]}) # Return the first suggestion
+        else:
+            return jsonify({"response": "Sorry, I couldn't process your request."})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/get_route", methods=["POST"])
 def get_route():
