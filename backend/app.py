@@ -3,6 +3,9 @@ from flask_cors import CORS
 from urllib.parse import quote
 import requests
 import json
+from googlemapsroute import find_stops_along_route
+
+
 
 app = Flask(__name__)
 CORS(app)
@@ -65,6 +68,9 @@ from llm import suggest_stops
 def llm_chat():
     # data = request.json
     # user_message = data.get("message", "")
+    data = request.json
+    start_location = data.get("start")
+    end_location = data.get("end")
     user_message = {
         "start": "Chicago, IL",
         "end": "New York, NY"
@@ -108,6 +114,30 @@ def get_route():
     osrm_response = requests.get(osrm_url)
     route_data = osrm_response.json()
     return jsonify(route_data)
+
+@app.route('/get_route2', methods=['POST'])
+def api_stops():
+    """
+    API endpoint that accepts JSON data with 'start', 'end', 'stop_type', 'num_samples', and 'radius'.
+    It returns the route points and stops along the route.
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No input data provided'}), 400
+
+    start = data.get('start')
+    end = data.get('end')
+    stop_type = data.get('stop_type')
+    num_samples = data.get('num_samples', 3)
+    radius = data.get('radius', 500)
+
+    # Validate required parameters
+    if not start or not end or not stop_type:
+        return jsonify({'error': 'Insufficient Fields'}), 400
+
+    result = find_stops_along_route(start, end, stop_type, num_samples=num_samples, radius=radius)
+    return jsonify(result)
+
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -53,7 +53,7 @@ def suggest_stops(data):
     try:
         start = data.get("start", "unknown location")
         end = data.get("end", "unknown location")
-        prompt = f"I'm planning a trip from {start} to {end}. Suggest some interesting stops along the way."
+        prompt = f"I'm planning a road trip from {start} to {end}. Suggest some interesting stops along the way."
 
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
