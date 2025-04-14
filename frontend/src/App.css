@@ -76,6 +76,45 @@ body {
   font-size: 1rem;
 }
 
+.chatbox {
+  display: flex;
+  flex-direction: column;
+  height: 190px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.chat-history {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  background-color: #f9f9f9;
+}
+
+.chat-message {
+  margin-bottom: 10px;
+}
+
+.chat-message.user {
+  text-align: right;
+  color: #007BFF;
+}
+
+.chat-message.llm {
+  text-align: left;
+  color: #333;
+}
+
+.llmTextBox {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+  height: 15px;
+}
+
 .stopTextBox {
   margin-bottom: 5px;
 }

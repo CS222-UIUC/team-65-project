@@ -35,6 +35,8 @@ function App() {
     setStops([...stops, ""]);
   };
 
+  const [llmInput, setLlmInput] = useState("");
+
   const handleStopChange = (index, value) => {
     const newStops = [...stops];
     newStops[index] = value;
@@ -74,6 +76,26 @@ function App() {
     }
   };
 
+  const handleLLM2 = async () => {
+    try {
+      let requestData = { place_type: placeType };
+
+      if (route) {
+        requestData["route"] = route;
+      } else if (userLocation) {
+        requestData["location"] = userLocation;
+      } else {
+        alert("Unable to determine location.");
+        return;
+      }
+
+      const response = await axios.post("http://127.0.0.1:5000/find_places", requestData);
+      setFoundPlaces(response.data);
+    } catch (error) {
+      console.error("Error fetching places:", error);
+    }
+  };
+
   const addPlaceToStops = (place) => {
     setStops([...stops, place.name]);
   };
@@ -93,6 +115,29 @@ function App() {
 
     window.open(googleMapsUrl, '_blank');
   };
+
+  const [chatHistory, setChatHistory] = useState([]); // State to store chat history
+
+  const handleLLM = async () => {
+    if (!llmInput.trim()) return; // Prevent empty messages
+
+    // Add user input to chat history
+    setChatHistory((prev) => [...prev, { sender: "user", message: llmInput }]);
+
+    try {
+      const response = await axios.post("http://127.0.0.1:5000/llm_chat", { message: llmInput });
+      const llmResponse = response.data.response;
+
+      // Add LLM response to chat history
+      setChatHistory((prev) => [...prev, { sender: "llm", message: llmResponse }]);
+    } catch (error) {
+      console.error("Error communicating with LLM:", error);
+      setChatHistory((prev) => [...prev, { sender: "llm", message: "Error: Unable to fetch response." }]);
+    }
+
+    setLlmInput(""); // Clear input field
+  };
+
 
   return (
     <div className="app-container">
@@ -124,6 +169,8 @@ function App() {
               />
             </div>
           </section>
+        
+        
     
           {/* Stops */}
           <section className="section">
@@ -159,6 +206,29 @@ function App() {
                 onChange={(e) => setPlaceType(e.target.value)}
               />
               <button className="button primary" onClick={handleFindPlaces}>Find Places</button>
+            </div>
+          </section>
+
+          <section className="section">
+            <h2 className="section-title">LLM Chat</h2>
+            <div className="input-group">
+                <textarea
+                  className="llmTextBox"
+                  placeholder="Chat with LLM"
+                  value={llmInput}
+                  onChange={(e) => setLlmInput(e.target.value)}
+                />
+                <button className="button primary" onClick={handleLLM}>Send</button>
+              </div>
+            <div className="chatbox">
+              <div className="chat-history">
+                {chatHistory.map((chat, index) => (
+                  <div key={index} className={`chat-message ${chat.sender}`}>
+                    <span>{chat.message}</span>
+                  </div>
+                ))}
+              </div>
+              
             </div>
           </section>
     
