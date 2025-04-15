@@ -204,7 +204,7 @@ function App() {
 
 
     <div className="googleMap">
-    <LoadScript googleMapsApiKey="AIzaSyD5SBbGIdRjRbz0SJyXY1l5g1P8SuDH9_c">
+    <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}>
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={center}
