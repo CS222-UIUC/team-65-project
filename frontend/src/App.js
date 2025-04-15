@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Map from "./components/Map";
 import './App.css';
+import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+
 
 function App() {
   const [start, setStart] = useState("");
@@ -15,6 +17,17 @@ function App() {
     lon: -88.2434,
     name: "Champaign, IL (Default)"
   });
+
+
+  const containerStyle = {
+    width: '100%',
+    height: '400px',
+  };
+  
+  const center = {
+    lat: 40.1164,  // Replace with your lat
+    lng: -88.2434 // Replace with your lng
+  };
 
   // Get User's Current Location
   useEffect(() => {
@@ -257,8 +270,25 @@ function App() {
           </section>
         </div>
 
-      </main>
+
+
+
+    <div className="googleMap">
+    <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}>
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={center}
+        zoom={10}
+      >
+        <Marker position={center} />
+      </GoogleMap>
+    </LoadScript>
     </div>
+
+
+    </main>
+    </div>
+
   );
 }
 
