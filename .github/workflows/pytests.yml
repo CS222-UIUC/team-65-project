@@ -6,7 +6,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      PYTHONPATH: backend
+      PYTHONPATH: .
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
