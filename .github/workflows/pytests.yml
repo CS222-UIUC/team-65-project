@@ -5,6 +5,8 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: backend
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -21,13 +23,13 @@ jobs:
           pip install pytest requests-mock python-dotenv
       
       - name: Run tests
-        # run: |
-        #   cp backend/.env.test backend/.env
-        #   pytest tests/
-        #         - name: Run tests
         run: |
           cp backend/.env.test backend/.env
-          # prepend backend/ to Python’s module search path
-          export PYTHONPATH="${{ github.workspace }}/backend"
           pytest tests/
+                - name: Run tests
+        # run: |
+        #   cp backend/.env.test backend/.env
+        #   # prepend backend/ to Python’s module search path
+        #   export PYTHONPATH="${{ github.workspace }}/backend"
+        #   pytest tests/
 
