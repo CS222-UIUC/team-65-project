@@ -62,27 +62,27 @@ def find_places():
 
     return jsonify({"error": "No results found"}), 404
 
-from llm import suggest_stops  
+from llm import suggest_stops, parse_user_input
 
 @app.route("/llm_chat", methods=["POST"])
 def llm_chat():
-    # data = request.json
-    # user_message = data.get("message", "")
     data = request.json
+    user_message = data.get("message", "")
     start_location = data.get("start")
     end_location = data.get("end")
-    user_message = {
-        "start": "Chicago, IL",
-        "end": "New York, NY"
-    }
+    user_location = data.get("userLocation")
 
     if not user_message:
         return jsonify({"error": "Message is required"}), 400
 
     try:
-        # Use the LLM function to generate a response
-        #response = suggest_stops({"start": user_message, "end": ""})
-        response = suggest_stops(user_message)
+        # Use start_location, end_location, and user_location in your LLM logic
+        response = parse_user_input({
+            "start": start_location,
+            "end": end_location,
+            "user_location": user_location,
+            "message": user_message,
+        })
         if response["success"]:
             return jsonify({"response": response["suggestions"][0]["name"]}) # Return the first suggestion
         else:
