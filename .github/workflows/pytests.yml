@@ -26,5 +26,4 @@ jobs:
         run: |
           cp backend/.env.test backend/.env
           pytest tests/
-                - name: Run tests
 
