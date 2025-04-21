@@ -6,7 +6,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      PYTHONPATH: .
+      PYTHONPATH: backend
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -27,9 +27,4 @@ jobs:
           cp backend/.env.test backend/.env
           pytest tests/
                 - name: Run tests
-        # run: |
-        #   cp backend/.env.test backend/.env
-        #   # prepend backend/ to Python’s module search path
-        #   export PYTHONPATH="${{ github.workspace }}/backend"
-        #   pytest tests/
 
