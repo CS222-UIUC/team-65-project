@@ -31,10 +31,62 @@ Example response format:
 ]
 """
 
+def parse_user_input(data):
+    try:
+        start = data.get("start", "unknown location")
+        end = data.get("end", "unknown location")
+        message = data.get("message", "")
+        system_prompt = """
+        You are a trip assistant helping a traveler find places along their route or near their location. When suggesting places, consider:
+        - The type of place the user is looking for
+        - The maximum travel time specified
+        = type of request if looking for food, gas, etc. look for places that are close by user location for less time relevant requests you can look further
+        = if looking for a route, look for places along the route
+        - look at places that have good reviews and are popular
+        - cost of the place the user want to visit
+        - The current location or route
+        - Relevance to the user's needs
+        You must return a JSON array of place suggestions. Try to find 5 different places. Each place must be a dictionary with exactly these keys:
+        - "name": string, the name of the place
+        - "category": string, type of place (e.g., restaurant, landmark, gas station)
+        - "address": string, address of the place
+        - "estimated_time_minutes": integer, estimated travel time in minutes
+        - "description": string, brief description of the place
+        - "worth_visiting": string, explanation of why it's worth visiting
+        Your response must be valid JSON that can be parsed. Do not include any text outside the JSON array.
+        Example response format:
+        [
+            {
+                "name": "Sample Place",
+                "category": "restaurant",
+                "estimated_time_minutes": 15,
+                "address": "123 Sample St, Sample City, ST 12345",
+                "description": "A cozy Italian restaurant",
+                "worth_visiting": "Known for authentic pasta and great atmosphere"
+            }
+        ]
+        """
+        prompt = f"I am driving from {start} to {end}. I want to know if {message}"
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.0,
+            max_tokens=500
+        )
+        suggestions = parse_llm_response(response.choices[0].message.content)
+        return {"success": True, "suggestions": suggestions}
+    except Exception as e:
+        print(f"Error in suggest_stops: {str(e)}")
+        return {"success": False, "error": "Failed to generate suggestions", "details": str(e)}
+    
+
 def parse_llm_response(response_text):
     try:
         suggestions = json.loads(response_text)
-        required_keys = {"name", "category", "estimated_time_minutes", "description", "worth_visiting"}
+        required_keys = {"name", "category", "estimated_time_minutes", "address", "description", "worth_visiting"}
         
         if not isinstance(suggestions, list):
             raise ValueError("Response is not a list")
@@ -56,7 +108,7 @@ def suggest_stops(data):
         prompt = f"I'm planning a road trip from {start} to {end}. Suggest some interesting stops along the way."
 
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt}
@@ -128,4 +180,3 @@ if __name__ == "__main__":
     )
     print("\nTime-based suggestions:")
     print(json.dumps(time_response, indent=2))
-
