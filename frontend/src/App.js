@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Map from "./components/Map";
 import "./App.css";
-import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
+import { GoogleMap, LoadScript, Marker, Polyline } from "@react-google-maps/api";
 
 function App() {
   const [start, setStart] = useState("");
@@ -26,6 +26,12 @@ function App() {
     lat: 40.1164, // Replace with your lat
     lng: -88.2434, // Replace with your lng
   };
+
+
+  const [googleMapRoute, setGoogleMapRoute] = useState([]); // For Google Maps API
+
+
+
 
   // Get User's Current Location
   useEffect(() => {
@@ -62,6 +68,14 @@ function App() {
         stops,
       });
       setRoute(response.data);
+
+
+    // Update the state for Google Maps API
+    const coordinates = response.data.routes[0].geometry.coordinates; // Assuming GeoJSON format
+   const path = coordinates.map(([lng, lat]) => ({ lat, lng })); // Convert to Google Maps format
+    setGoogleMapRoute(path); // Update the Google Maps route state
+ 
+
     } catch (error) {
       console.error("Error fetching route:", error);
     }
@@ -293,12 +307,11 @@ function App() {
         {/* Map */}
         <div class="box2">
           <section className="section">
-            <h2 className="section-title">Route Map</h2>
-            <Map className="map-section" route={route} />
-          </section>
-        </div>
+            {/* <h2 className="section-title">Route Map</h2>
+            <Map className="map-section" route={route} /> */}
 
-        <div className="googleMap">
+
+<div className="googleMap">
           <LoadScript
             googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
           >
@@ -308,9 +321,22 @@ function App() {
               zoom={10}
             >
               <Marker position={center} />
+
+              {/* Plot the route */}
+              {googleMapRoute.length > 0 && (
+                <Polyline path={googleMapRoute} options={{ strokeColor: "#FF0000", strokeWeight: 4 }} />
+              )}
+
+
             </GoogleMap>
           </LoadScript>
+          
+            </div>
+          </section>
+            
         </div>
+
+  
       </main>
     </div>
   );

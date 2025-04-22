@@ -6,6 +6,17 @@ import json
 from googlemapsroute import find_stops_along_route
 
 
+from dotenv import load_dotenv
+import os
+import openai
+from openai import OpenAI
+
+load_dotenv()  # Load environment variables from .env file
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))  # Corrected syntax
+print("OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY"))
+
+
+
 
 app = Flask(__name__)
 CORS(app)
