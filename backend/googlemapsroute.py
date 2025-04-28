@@ -1,144 +1,173 @@
-from dotenv import load_dotenv
 import os
-
+import math
 import logging
-import time
-from datetime import datetime
-from typing import List, Tuple, Dict, Any
-
-import googlemaps
+from dotenv import load_dotenv
+import requests
 import polyline
-from geopy.distance import geodesic
 
-load_dotenv()  # Load environment variables from .env
+load_dotenv()  # loads GOOGLE_MAPS_KEY
 
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_KEY")
-class DummyClient:
-    pass
 
-try:
-    gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
-except ValueError:
-    logging.warning("Invalid API key provided; using dummy Google Maps client")
-    gmaps = DummyClient()
 
-def sample_route_points_by_distance(
-    route: List[Tuple[float, float]],
-    num_samples: int
-) -> List[Tuple[float, float]]:
+def haversine(lat1, lng1, lat2, lng2):
     """
-    Sample 'num_samples' points evenly spaced by distance along a polyline route.
+    Compute the great-circle distance between two points on the Earth (in meters).
     """
-    # Compute cumulative distances along the route
-    cum_distances: List[float] = [0.0]
-    for (lat1, lng1), (lat2, lng2) in zip(route, route[1:]):
-        segment = geodesic((lat1, lng1), (lat2, lng2)).meters
-        cum_distances.append(cum_distances[-1] + segment)
-
-    total_distance = cum_distances[-1]
-    if num_samples < 2 or total_distance == 0:
-        return route
-
-    # Target distances for each sample
-    targets = [i * total_distance / (num_samples - 1) for i in range(num_samples)]
-    samples: List[Tuple[float, float]] = []
-    idx = 0
-    for t in targets:
-        # Advance index to the segment containing target distance
-        while idx < len(cum_distances) - 1 and cum_distances[idx] < t:
-            idx += 1
-        samples.append(route[idx])
-    return samples
+    R = 6371000  # Earth radius in meters
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lng2 - lng1)
+    a = (math.sin(dphi / 2) ** 2 +
+         math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2)
+    return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
-def _paginate_places(first_page: Dict[str, Any]) -> List[Dict[str, Any]]:
+def get_route(start, end):
     """
-    Yield all pages of a Places API nearby search, handling next_page_token delays.
+    Fetches the polyline route between start and end (strings or "lat,lng").
+    Returns a list of (lat, lng) points.
     """
-    pages = [first_page]
-    while 'next_page_token' in pages[-1]:
-        time.sleep(2)  # Required delay before requesting next page
-        next_token = pages[-1]['next_page_token']
-        page = gmaps.places_nearby(page_token=next_token)
-        pages.append(page)
-    return pages
-
-
-def find_stops_along_route(
-    start: str,
-    end: str,
-    stop_type: str,
-    num_samples: int = 10,
-    radius: int = 500
-) -> Dict[str, Any]:
-    """
-    Fetches a route from 'start' to 'end'.
-    Samples points evenly by distance, then searches for the highest-rated stop within `radius`
-    meters of each point.
-
-    Returns a dict with:
-      - 'route': List of (lat, lng) tuples
-      - 'stops': List of stop info dicts (place_id, name, location, rating, user_ratings_total, vicinity)
-    """
-    try:
-        directions = gmaps.directions(start, end, departure_time=datetime.now())
-    except Exception:
-        logging.exception("Failed to fetch directions from %s to %s", start, end)
-        return {'route': [], 'stops': []}
-
-    if not directions:
-        logging.warning("No route found from %s to %s", start, end)
-        return {'route': [], 'stops': []}
-
-    # Decode overview polyline
-    raw_poly = directions[0]['overview_polyline']['points']
-    route: List[Tuple[float, float]] = polyline.decode(raw_poly)
-
-    # Sample points along the route
-    sample_points = sample_route_points_by_distance(route, num_samples)
-
-    seen: Dict[str, Dict[str, Any]] = {}
-    # Search for places around each sample point
-    for lat, lng in sample_points:
-        first_page = gmaps.places_nearby(
-            location=(lat, lng),
-            radius=radius,
-            keyword=stop_type
-        )
-        for page in _paginate_places(first_page):
-            for p in page.get('results', []):
-                pid = p['place_id']
-                score = (p.get('rating', 0), p.get('user_ratings_total', 0))
-                # Keep the highest scored result per place_id
-                if pid not in seen or score > seen[pid]['_score']:
-                    seen[pid] = {
-                        'place_id': pid,
-                        'name': p.get('name'),
-                        'location': p.get('geometry', {}).get('location'),
-                        'rating': p.get('rating'),
-                        'user_ratings_total': p.get('user_ratings_total'),
-                        'vicinity': p.get('vicinity'),
-                        '_score': score
-                    }
-
-    stops = [
-        {k: v for k, v in info.items() if k != '_score'}
-        for info in seen.values()
-    ]
-
-    return {'route': route, 'stops': stops}
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    # Example usage:
-    start_address = 'Saratoga, CA'
-    end_address = 'Champaign, IL'
-    results = find_stops_along_route(
-        start_address,
-        end_address,
-        stop_type='coffee',
-        num_samples=10,
-        radius=500
+    url = (
+        "https://maps.googleapis.com/maps/api/directions/json"
+        f"?origin={start}&destination={end}&key={GOOGLE_MAPS_API_KEY}"
     )
-    print(results)
+    try:
+        resp = requests.get(url)
+        data = resp.json()
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error fetching directions: {e}")
+        return []
+
+    if data.get("status") != "OK":
+        logging.error(f"Directions API error: {data.get('status')}")
+        return []
+
+    points_str = data["routes"][0]["overview_polyline"]["points"]
+    return polyline.decode(points_str)
+
+
+def sample_route_points(route_points, num_samples):
+    """
+    Uniformly sample up to num_samples points along the route.
+    """
+    if not route_points:
+        return []
+
+    step = max(1, len(route_points) // num_samples)
+    return route_points[::step]
+
+
+def score_place(place, origin_lat, origin_lng, radius=500, max_reviews=500):
+    """
+    Example custom score combining rating, review count, and proximity.
+    Normalize each component to roughly [0,1] before weighting.
+    """
+    rating = place.get("rating", 0) / 5.0
+    reviews = place.get("user_ratings_total", 0)
+    reviews_norm = min(reviews, max_reviews) / max_reviews
+    plat = place["geometry"]["location"]["lat"]
+    plng = place["geometry"]["location"]["lng"]
+    dist = haversine(origin_lat, origin_lng, plat, plng) / radius  # >1 if outside
+    # weights: rating 60%, reviews 30%, penalty for distance 10%
+    return 0.6 * rating + 0.3 * reviews_norm - 0.1 * dist
+
+
+def get_stop_nearby(lat, lng, stop_type, radius=500,
+                    mode="prominence", custom_score_fn=None):
+    """
+    Finds one “best” stop near (lat,lng) of keyword type.
+
+    mode:
+      - "prominence" (default): API’s default sort within radius
+      - "distance":    nearest (requires omitting radius)
+      - "custom":      use custom_score_fn on top N candidates
+    """
+    base = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+    params = {
+        "location": f"{lat},{lng}",
+        "keyword": stop_type,
+        "key": GOOGLE_MAPS_API_KEY,
+    }
+
+    if mode == "distance":
+        params["rankby"] = "distance"
+    else:
+        # prominence or custom both need a radius
+        params["radius"] = radius
+
+    try:
+        resp = requests.get(base, params=params)
+        data = resp.json()
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Places API error: {e}")
+        return None
+
+    results = data.get("results", [])
+    if not results:
+        return None
+
+    if mode == "custom" and custom_score_fn:
+        # score top 10 candidates by your function
+        candidates = results[:10]
+        best = max(candidates, key=lambda p: custom_score_fn(p, lat, lng))
+    elif mode in ("distance", "prominence"):
+        best = results[0]
+    else:
+        raise ValueError(f"Unknown mode: {mode}")
+
+    return {
+        "place_id": best.get("place_id"),
+        "name": best.get("name"),
+        "location": best.get("geometry", {}).get("location"),
+        "rating": best.get("rating", "N/A"),
+        "user_ratings_total": best.get("user_ratings_total", "N/A"),
+        "vicinity": best.get("vicinity"),
+    }
+
+
+def find_stops_along_route(start, end, stop_type,
+                           num_samples=10, radius=500,
+                           mode="prominence", custom_score_fn=None):
+    """
+    Sample points along the route and find unique stops of stop_type.
+    Returns:
+      { "route": [...points...],
+        "stops": [...stop dicts...] }
+    """
+    route = get_route(start, end)
+    sampled = sample_route_points(route, num_samples)
+
+    stops = {}
+    for lat, lng in sampled:
+        stop = get_stop_nearby(lat, lng, stop_type, radius,
+                               mode=mode, custom_score_fn=custom_score_fn)
+        if stop and stop["place_id"] not in stops:
+            stops[stop["place_id"]] = stop
+
+    return {"route": route, "stops": list(stops.values())}
+
+
+if __name__ == "__main__":
+    # Example usage:
+    start_location = "Champaign, IL"
+    end_location = "Chicago, IL"
+    stop_type = "gas station"
+
+    # Choose mode: "prominence", "distance", or "custom"
+    mode = "custom"
+
+    result = find_stops_along_route(
+        start=start_location,
+        end=end_location,
+        stop_type=stop_type,
+        num_samples=8,
+        radius=800,
+        mode=mode,
+        custom_score_fn=score_place  # only used if mode=="custom"
+    )
+
+    print(f"Found {len(result['stops'])} stops along the route ({mode} mode):\n")
+    for stop in result["stops"]:
+        print(f"- {stop['name']} ({stop['vicinity']}): "
+              f"{stop['rating']}⭐️ from {stop['user_ratings_total']} reviews")
