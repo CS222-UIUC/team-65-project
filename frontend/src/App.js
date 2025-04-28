@@ -180,6 +180,26 @@ function App() {
     setLlmInput(""); // Clear input field
   };
 
+
+  const saveRouteToLocalStorage = () => {
+    if (googleMapRoute.length > 0) {
+      localStorage.setItem("googleMapRoute", JSON.stringify(googleMapRoute));
+      alert("Route saved to local storage!");
+    } else {
+      alert("No route to save!");
+    }
+  };
+  const restoreRouteFromLocalStorage = () => {
+    const savedRoute = localStorage.getItem("googleMapRoute");
+    if (savedRoute) {
+      setGoogleMapRoute(JSON.parse(savedRoute));
+      alert("Route restored from local storage!");
+    } else {
+      alert("No saved route found in local storage!");
+    }
+  };
+ 
+
   return (
     <div className="app-container">
       <header className="header">
@@ -332,6 +352,19 @@ function App() {
           </LoadScript>
           
             </div>
+
+              <button onClick={saveRouteToLocalStorage} style={{ marginTop: "10px" }}>
+                Save Route
+              </button>
+
+
+
+
+              {/* Restore Route Button */}
+              <button onClick={restoreRouteFromLocalStorage} style={{ marginTop: "10px" }}>
+              Restore Route
+              </button>
+
           </section>
             
         </div>
