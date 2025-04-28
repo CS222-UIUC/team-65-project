@@ -94,8 +94,9 @@ def llm_chat():
             "user_location": user_location,
             "message": user_message,
         })
+        print(response["suggestions"])
         if response["success"]:
-            return jsonify({"response": response["suggestions"][0]["name"]}) # Return the first suggestion
+            return jsonify({"response": response["suggestions"]}) # Return the first suggestion
         else:
             return jsonify({"response": "Sorry, I couldn't process your request."})
     except Exception as e:

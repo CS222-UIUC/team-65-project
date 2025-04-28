@@ -2,7 +2,12 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 // import Map from "./components/Map";
 import "./App.css";
-import { GoogleMap, LoadScript, Marker, Polyline } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  LoadScript,
+  Marker,
+  Polyline,
+} from "@react-google-maps/api";
 
 function App() {
   const [start, setStart] = useState("");
@@ -27,11 +32,7 @@ function App() {
     lng: -88.2434, // Replace with your lng
   };
 
-
   const [googleMapRoute, setGoogleMapRoute] = useState([]); // For Google Maps API
-
-
-
 
   // Get User's Current Location
   useEffect(() => {
@@ -69,13 +70,10 @@ function App() {
       });
       setRoute(response.data);
 
-
-    // Update the state for Google Maps API
-    const coordinates = response.data.routes[0].geometry.coordinates; // Assuming GeoJSON format
-   const path = coordinates.map(([lng, lat]) => ({ lat, lng })); // Convert to Google Maps format
-    setGoogleMapRoute(path); // Update the Google Maps route state
- 
-
+      // Update the state for Google Maps API
+      const coordinates = response.data.routes[0].geometry.coordinates; // Assuming GeoJSON format
+      const path = coordinates.map(([lng, lat]) => ({ lat, lng })); // Convert to Google Maps format
+      setGoogleMapRoute(path); // Update the Google Maps route state
     } catch (error) {
       console.error("Error fetching route:", error);
     }
@@ -148,6 +146,7 @@ function App() {
   };
 
   const [chatHistory, setChatHistory] = useState([]); // State to store chat history
+  const [llmRecommendations, setLlmRecommendations] = useState([]);
 
   const handleLLM = async () => {
     if (!llmInput.trim()) return; // Prevent empty messages
@@ -162,13 +161,17 @@ function App() {
         end: end, // Include end location
         userLocation: userLocation, // Include user location
       });
+
       const llmResponse = response.data.response;
 
       // Add LLM response to chat history
       setChatHistory((prev) => [
         ...prev,
-        { sender: "llm", message: llmResponse },
+        { sender: "llm", message: "Here are the top recommendations:" },
       ]);
+
+      // Update the recommendations state
+      setLlmRecommendations(llmResponse);
     } catch (error) {
       console.error("Error communicating with LLM:", error);
       setChatHistory((prev) => [
@@ -179,7 +182,6 @@ function App() {
 
     setLlmInput(""); // Clear input field
   };
-
 
   const saveRouteToLocalStorage = () => {
     if (googleMapRoute.length > 0) {
@@ -198,7 +200,6 @@ function App() {
       alert("No saved route found in local storage!");
     }
   };
- 
 
   return (
     <div className="app-container">
@@ -325,51 +326,79 @@ function App() {
         </div>
 
         {/* Map */}
-        <div class="box2">
+        <div className="box2">
           <section className="section">
-            {/* <h2 className="section-title">Route Map</h2>
-            <Map className="map-section" route={route} /> */}
-
-
-<div className="googleMap">
-          <LoadScript
-            googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
-          >
-            <GoogleMap
-              mapContainerStyle={containerStyle}
-              center={center}
-              zoom={10}
-            >
-              <Marker position={center} />
-
-              {/* Plot the route */}
-              {googleMapRoute.length > 0 && (
-                <Polyline path={googleMapRoute} options={{ strokeColor: "#FF0000", strokeWeight: 4 }} />
-              )}
-
-
-            </GoogleMap>
-          </LoadScript>
-          
+            <div className="googleMap">
+              <LoadScript
+                googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
+              >
+                <GoogleMap
+                  mapContainerStyle={containerStyle}
+                  center={center}
+                  zoom={10}
+                >
+                  <Marker position={center} />
+                  {googleMapRoute.length > 0 && (
+                    <Polyline
+                      path={googleMapRoute}
+                      options={{ strokeColor: "#FF0000", strokeWeight: 4 }}
+                    />
+                  )}
+                </GoogleMap>
+              </LoadScript>
             </div>
 
-              <button onClick={saveRouteToLocalStorage} style={{ marginTop: "10px" }}>
-                Save Route
-              </button>
-
-
-
-
-              {/* Restore Route Button */}
-              <button onClick={restoreRouteFromLocalStorage} style={{ marginTop: "10px" }}>
+            <button
+              onClick={saveRouteToLocalStorage}
+              style={{ marginTop: "10px" }}
+            >
+              Save Route
+            </button>
+            <button
+              onClick={restoreRouteFromLocalStorage}
+              style={{ marginTop: "10px" }}
+            >
               Restore Route
-              </button>
-
+            </button>
           </section>
-            
-        </div>
 
-  
+          {/* Recommendations Section */}
+          <section className="section">
+            <h2 className="section-title">Top Recommendations</h2>
+            {llmRecommendations.length > 0 ? (
+              <ul className="recommendations-list">
+                {llmRecommendations.map((place, index) => (
+                  <li key={index} className="recommendation-item">
+                    <h3>{place.name}</h3>
+                    <p>
+                      <strong>Category:</strong> {place.category}
+                    </p>
+                    <p>
+                      <strong>Estimated Time:</strong>{" "}
+                      {place.estimated_time_minutes} minutes
+                    </p>
+                    <p>
+                      <strong>Description:</strong> {place.description}
+                    </p>
+                    <p>
+                      <strong>Worth Visiting:</strong> {place.worth_visiting}
+                    </p>
+                    <button
+                      className="button small"
+                      onClick={() => addPlaceToStops(place)}
+                    >
+                      Add to Stops
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>
+                No recommendations yet. Use the LLM chat to get suggestions.
+              </p>
+            )}
+          </section>
+        </div>
       </main>
     </div>
   );
