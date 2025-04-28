@@ -13,7 +13,14 @@ from geopy.distance import geodesic
 load_dotenv()  # Load environment variables from .env
 
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_KEY")
-gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
+class DummyClient:
+    pass
+
+try:
+    gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
+except ValueError:
+    logging.warning("Invalid API key provided; using dummy Google Maps client")
+    gmaps = DummyClient()
 
 def sample_route_points_by_distance(
     route: List[Tuple[float, float]],
@@ -114,7 +121,6 @@ def find_stops_along_route(
                         '_score': score
                     }
 
-    # Strip internal scoring fields
     stops = [
         {k: v for k, v in info.items() if k != '_score'}
         for info in seen.values()
@@ -136,15 +142,3 @@ if __name__ == '__main__':
         radius=500
     )
     print(results)
-if __name__ == '__main__':
-    start_location = "Champaign, IL"
-    end_location = "Chicago, IL"
-    stop_type = "gas station"
-
-    result = find_stops_along_route(start_location, end_location, stop_type)
-    print("Route points:")
-    print(result['route'])
-    print("\nStops along the route:")
-    for stop in result['stops']:
-        print(stop)
-
