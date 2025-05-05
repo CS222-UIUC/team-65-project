@@ -1,41 +1,68 @@
-import React from "react";
-import { MapContainer, TileLayer, Polyline, Marker, Popup } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
+import React, { useMemo } from "react";
+import {
+  GoogleMap,
+  LoadScript,
+  Polyline,
+  Marker,
+  InfoWindow,
+} from "@react-google-maps/api";
 
-const Map = ({ route }) => {
-    const defaultPosition = [40.1164, -88.2434];
-
-    const getPolylineCoordinates = () => {
-        if (!route || !route.routes || route.routes.length === 0) return [];
-        const coordinates = route.routes[0].geometry.coordinates;
-        return coordinates.map(([lon, lat]) => [lat, lon]);
-    };
-
-    const polylineCoordinates = getPolylineCoordinates();
-
-    return (
-        <MapContainer
-            center={polylineCoordinates.length > 0 ? polylineCoordinates[0] : defaultPosition}
-            zoom={10}
-            style={{ height: "500px", width: "100%" }}
-        >
-            <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors'
-            />
-            {polylineCoordinates.length > 0 && (
-                <>
-                    <Polyline positions={polylineCoordinates} color="blue" />
-                    <Marker position={polylineCoordinates[0]}>
-                        <Popup>Start</Popup>
-                    </Marker>
-                    <Marker position={polylineCoordinates.slice(-1)[0]}>
-                        <Popup>End</Popup>
-                    </Marker>
-                </>
-            )}
-        </MapContainer>
-    );
+const containerStyle = {
+  width: "100%",
+  height: "500px",
 };
 
-export default Map;
+const defaultCenter = { lat: 40.1164, lng: -88.2434 };
+
+const Map = ({ route }) => {
+  // Convert OSRM [lon, lat] pairs into Google’s {lat, lng} objects
+  const path = useMemo(() => {
+    if (!route?.routes?.length) return [];
+    return route.routes[0].geometry.coordinates.map(([lon, lat]) => ({
+      lat,
+      lng: lon,
+    }));
+  }, [route]);
+
+  // Center on the first point if available, otherwise default
+  const center = path.length > 0 ? path[0] : defaultCenter;
+
+  return (
+    <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}>
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={center}
+        zoom={10}
+      >
+        {path.length > 0 && (
+          <>
+            <Polyline
+              path={path}
+              options={{
+                strokeColor: "#0000FF",
+                strokeOpacity: 1,
+                strokeWeight: 3,
+              }}
+            />
+
+            {/* Start marker */}
+            <Marker position={path[0]}>
+              <InfoWindow>
+                <div>Start</div>
+              </InfoWindow>
+            </Marker>
+
+            {/* End marker */}
+            <Marker position={path[path.length - 1]}>
+              <InfoWindow>
+                <div>End</div>
+              </InfoWindow>
+            </Marker>
+          </>
+        )}
+      </GoogleMap>
+    </LoadScript>
+  );
+};
+
+export default React.memo(Map);
