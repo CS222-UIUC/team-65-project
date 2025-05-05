@@ -96,7 +96,15 @@ function App() {
         "http://127.0.0.1:5000/find_places",
         requestData
       );
-      setFoundPlaces(response.data);
+
+      console.log("Found Places Response:", response.data); // Debugging
+
+      if (Array.isArray(response.data)) {
+        setFoundPlaces(response.data);
+      } else {
+        console.error("Unexpected response format:", response.data);
+        setFoundPlaces([]);
+      }
     } catch (error) {
       console.error("Error fetching places:", error);
     }
@@ -309,9 +317,20 @@ function App() {
               <ul className="found-places-list">
                 {foundPlaces.map((place, index) => (
                   <li key={index} className="place-item">
-                    <span>
-                      {place.name} ({place.lat}, {place.lon})
-                    </span>
+                    <h3>{place.name}</h3>
+                    <p>
+                      <strong>Latitude:</strong> {place.lat}
+                    </p>
+                    <p>
+                      <strong>Longitude:</strong> {place.lon}
+                    </p>
+                    <p>
+                      <strong>Description:</strong> {place.description}
+                    </p>
+                    <p>
+                      <strong>Estimated Time:</strong>{" "}
+                      {place.estimated_time_minutes} minutes
+                    </p>
                     <button
                       className="button small"
                       onClick={() => addPlaceToStops(place)}
