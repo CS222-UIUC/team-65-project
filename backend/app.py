@@ -45,20 +45,25 @@ def find_places():
         return jsonify({"error": "Place type is required"}), 400
 
     headers = {"User-Agent": "TripPlannerApp"}
+    places = []
 
     if route:
         # Find places along the route by taking midpoints
         waypoints = route.get("routes", [])[0].get("geometry", {}).get("coordinates", [])
         midpoints = waypoints[:: max(1, len(waypoints) // 5)]  # Get every 1/5th point along route
-        places = []
         for lon, lat in midpoints:
             encoded_query = quote(f"{place_type} near {lat},{lon}")
             nominatim_url = f"https://nominatim.openstreetmap.org/search?q={encoded_query}&format=json"
             response = requests.get(nominatim_url, headers=headers)
             if response.status_code == 200 and response.json():
-                places.extend([{"name": p["display_name"], "lat": float(p["lat"]), "lon": float(p["lon"])}
-                               for p in response.json()[:3]])  # Limit to 3 per location
-        return jsonify(places)
+                for p in response.json()[:3]:  # Limit to 3 places per location
+                    places.append({
+                        "name": p["display_name"],
+                        "lat": float(p["lat"]),
+                        "lon": float(p["lon"]),
+                        "description": "A great place to visit!",  # Mocked data
+                        "estimated_time_minutes": 10  # Mocked data
+                    })
 
     elif user_location:
         lat, lon = user_location["lat"], user_location["lon"]
@@ -67,11 +72,19 @@ def find_places():
         response = requests.get(nominatim_url, headers=headers)
 
         if response.status_code == 200 and response.json():
-            places = [{"name": p["display_name"], "lat": float(p["lat"]), "lon": float(p["lon"])}
-                      for p in response.json()]
-            return jsonify(places)
+            for p in response.json():
+                places.append({
+                    "name": p["display_name"],
+                    "lat": float(p["lat"]),
+                    "lon": float(p["lon"]),
+                    "description": "A great place to visit!",  # Mocked data
+                    "estimated_time_minutes": 10  # Mocked data
+                })
 
-    return jsonify({"error": "No results found"}), 404
+    if not places:
+        return jsonify({"error": "No results found"}), 404
+
+    return jsonify(places)
 
 from llm import suggest_stops, parse_user_input
 
