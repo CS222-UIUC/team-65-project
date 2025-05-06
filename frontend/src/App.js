@@ -16,6 +16,7 @@ function App() {
   const [route, setRoute] = useState(null);
   const [placeType, setPlaceType] = useState("");
   const [foundPlaces, setFoundPlaces] = useState([]);
+  const [googleMapSegments, setGoogleMapSegments] = useState([]);
   const [userLocation, setUserLocation] = useState({
     lat: 40.1164,
     lon: -88.2434,
@@ -79,36 +80,36 @@ function App() {
     }
   };
 
-  const handleFindPlaces = async () => {
-    try {
-      let requestData = { place_type: placeType };
+  // const handleFindPlaces = async () => {
+  //   try {
+  //     let requestData = { place_type: placeType };
 
-      if (route) {
-        requestData["route"] = route;
-      } else if (userLocation) {
-        requestData["location"] = userLocation;
-      } else {
-        alert("Unable to determine location.");
-        return;
-      }
+  //     if (route) {
+  //       requestData["route"] = route;
+  //     } else if (userLocation) {
+  //       requestData["location"] = userLocation;
+  //     } else {
+  //       alert("Unable to determine location.");
+  //       return;
+  //     }
 
-      const response = await axios.post(
-        "http://127.0.0.1:5000/find_places",
-        requestData
-      );
+  //     const response = await axios.post(
+  //       "http://127.0.0.1:5000/find_places",
+  //       requestData
+  //     );
 
-      console.log("Found Places Response:", response.data); // Debugging
+  //     console.log("Found Places Response:", response.data); // Debugging
 
-      if (Array.isArray(response.data)) {
-        setFoundPlaces(response.data);
-      } else {
-        console.error("Unexpected response format:", response.data);
-        setFoundPlaces([]);
-      }
-    } catch (error) {
-      console.error("Error fetching places:", error);
-    }
-  };
+  //     if (Array.isArray(response.data)) {
+  //       setFoundPlaces(response.data);
+  //     } else {
+  //       console.error("Unexpected response format:", response.data);
+  //       setFoundPlaces([]);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching places:", error);
+  //   }
+  // };
 
   const handleLLM2 = async () => {
     try {
@@ -134,7 +135,7 @@ function App() {
   };
 
   const addPlaceToStops = (place) => {
-    setStops([...stops, place.name]);
+    setStops([...stops, place.address]);
   };
 
   // export the route to a google maps link
@@ -167,8 +168,8 @@ function App() {
         message: llmInput,
         start: start, // Include start location
         end: end, // Include end location
-        userLocation: userLocation, // Include user location
-      });
+        stops: stops, // Include stops
+        });
 
       const llmResponse = response.data.response;
 
@@ -269,7 +270,7 @@ function App() {
             </div>
           </section>
 
-          {/* Find Places */}
+          {/* Find Places
           <section className="section">
             <h2 className="section-title">Find Places</h2>
             <div className="input-group">
@@ -284,7 +285,7 @@ function App() {
                 Find Places
               </button>
             </div>
-          </section>
+          </section> */}
 
           <section className="section">
             <h2 className="section-title">LLM Chat</h2>
@@ -398,6 +399,9 @@ function App() {
                     </p>
                     <p>
                       <strong>Description:</strong> {place.description}
+                    </p>
+                    <p>
+                      <strong>Address:</strong> {place.address}
                     </p>
                     <p>
                       <strong>Worth Visiting:</strong> {place.worth_visiting}
