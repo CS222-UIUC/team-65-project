@@ -209,218 +209,94 @@ function App() {
     }
   };
 
-  return (
-    <div className="app-container">
-      <header className="header">
-        <h1 className="title">Trip Planner</h1>
-      </header>
-
-      <main className="main-content">
-        <div class="box1">
-          {/* Start and End Locations */}
-          <section className="section">
-            <h2 className="section-title">Plan Your Trip</h2>
-            <div className="input-group">
-              <input
-                className="textBox"
-                type="text"
-                placeholder="Start Location"
-                value={start}
-                onChange={(e) => setStart(e.target.value)}
-              />
-              <input
-                className="textBox"
-                type="text"
-                placeholder="End Location"
-                value={end}
-                onChange={(e) => setEnd(e.target.value)}
-              />
-            </div>
-          </section>
-
-          {/* Stops */}
-          <section className="section">
-            <h2 className="section-title">Stops</h2>
-            <div className="stops-container">
-              {stops.map((stop, index) => (
-                <input
-                  className="stopTextBox"
-                  key={index}
-                  type="text"
-                  placeholder={`Stop ${index + 1}`}
-                  value={stop}
-                  onChange={(e) => handleStopChange(index, e.target.value)}
-                />
-              ))}
-              <div className="button-group">
-                <button className="button" onClick={handleAddStop}>
-                  + Add Stop
-                </button>
-                <button className="button primary" onClick={handleSubmit}>
-                  Get Route
-                </button>
-                <button
-                  className="button secondary"
-                  onClick={exportToGoogleMaps}
-                >
-                  Export to Google Maps
-                </button>
-              </div>
-            </div>
-          </section>
-
-          {/* Find Places */}
-          <section className="section">
-            <h2 className="section-title">Find Places</h2>
-            <div className="input-group">
-              <input
-                className="textBox"
-                type="text"
-                placeholder="Search for places (e.g., gas stations, coffee shops)"
-                value={placeType}
-                onChange={(e) => setPlaceType(e.target.value)}
-              />
-              <button className="button primary" onClick={handleFindPlaces}>
-                Find Places
-              </button>
-            </div>
-          </section>
-
-          <section className="section">
-            <h2 className="section-title">LLM Chat</h2>
-            <div className="input-group">
-              <textarea
-                className="llmTextBox"
-                placeholder="Chat with LLM"
-                value={llmInput}
-                onChange={(e) => setLlmInput(e.target.value)}
-              />
-              <button className="button primary" onClick={handleLLM}>
-                Send
-              </button>
-            </div>
-            <div className="chatbox">
-              <div className="chat-history">
-                {chatHistory.map((chat, index) => (
-                  <div key={index} className={`chat-message ${chat.sender}`}>
-                    <span>{chat.message}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Display Found Places */}
-          {foundPlaces.length > 0 && (
-            <section className="section">
-              <h2 className="section-title">Suggested Places</h2>
-              <ul className="found-places-list">
-                {foundPlaces.map((place, index) => (
-                  <li key={index} className="place-item">
-                    <h3>{place.name}</h3>
-                    <p>
-                      <strong>Latitude:</strong> {place.lat}
-                    </p>
-                    <p>
-                      <strong>Longitude:</strong> {place.lon}
-                    </p>
-                    <p>
-                      <strong>Description:</strong> {place.description}
-                    </p>
-                    <p>
-                      <strong>Estimated Time:</strong>{" "}
-                      {place.estimated_time_minutes} minutes
-                    </p>
-                    <button
-                      className="button small"
-                      onClick={() => addPlaceToStops(place)}
-                    >
-                      Add to Stops
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </div>
-
-        {/* Map */}
-        <div className="box2">
-          <section className="section">
-            <div className="googleMap">
-              <LoadScript
-                googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
-              >
-                <GoogleMap
-                  mapContainerStyle={containerStyle}
-                  center={center}
-                  zoom={10}
-                >
-                  <Marker position={center} />
-                  {googleMapRoute.length > 0 && (
-                    <Polyline
-                      path={googleMapRoute}
-                      options={{ strokeColor: "#FF0000", strokeWeight: 4 }}
-                    />
-                  )}
-                </GoogleMap>
-              </LoadScript>
-            </div>
-
+  
+  
+    return (
+      <div className="app-container" style={{ fontFamily: "Arial, sans-serif", padding: "20px" }}>
+        {/* Header Section */}
+        <header style={{ textAlign: "center", marginBottom: "20px" }}>
+          <h1 style={{ color: "#333" }}>Route Planner</h1>
+          <p style={{ color: "#555" }}>Plan your route and explore places along the way!</p>
+        </header>
+  
+        {/* Input Section */}
+        <section style={{ marginBottom: "20px" }}>
+          <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+            <input
+              type="text"
+              placeholder="Start Location"
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+              style={{
+                flex: 1,
+                padding: "10px",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+              }}
+            />
+            <input
+              type="text"
+              placeholder="End Location"
+              value={end}
+              onChange={(e) => setEnd(e.target.value)}
+              style={{
+                flex: 1,
+                padding: "10px",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+              }}
+            />
+          </div>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <input
+              type="text"
+              placeholder="Place Type (e.g., restaurants)"
+              value={placeType}
+              onChange={(e) => setPlaceType(e.target.value)}
+              style={{
+                flex: 1,
+                padding: "10px",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+              }}
+            />
             <button
-              onClick={saveRouteToLocalStorage}
-              style={{ marginTop: "10px" }}
+              onClick={() => alert("Find Places Clicked")}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "#007BFF",
+                color: "#FFF",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
             >
-              Save Route
+              Find Places
             </button>
-            <button
-              onClick={restoreRouteFromLocalStorage}
-              style={{ marginTop: "10px" }}
-            >
-              Restore Route
-            </button>
-          </section>
-
-          {/* Recommendations Section */}
-          <section className="section">
-            <h2 className="section-title">Top Recommendations</h2>
-            {llmRecommendations.length > 0 ? (
-              <ul className="recommendations-list">
-                {llmRecommendations.map((place, index) => (
-                  <li key={index} className="recommendation-item">
-                    <h3>{place.name}</h3>
-                    <p>
-                      <strong>Category:</strong> {place.category}
-                    </p>
-                    <p>
-                      <strong>Estimated Time:</strong>{" "}
-                      {place.estimated_time_minutes} minutes
-                    </p>
-                    <p>
-                      <strong>Description:</strong> {place.description}
-                    </p>
-                    <p>
-                      <strong>Worth Visiting:</strong> {place.worth_visiting}
-                    </p>
-                    <button
-                      className="button small"
-                      onClick={() => addPlaceToStops(place)}
-                    >
-                      Add to Stops
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>
-                No recommendations yet. Use the LLM chat to get suggestions.
-              </p>
-            )}
-          </section>
-        </div>
-      </main>
-    </div>
-  );
+          </div>
+        </section>
+  
+        {/* Map Section */}
+        <section style={{ marginBottom: "20px" }}>
+          <div className="googleMap">
+            <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}>
+              <GoogleMap mapContainerStyle={containerStyle} center={userLocation} zoom={10}>
+                <Marker position={userLocation} />
+                {route && (
+                  <Polyline
+                    path={route}
+                    options={{ strokeColor: "#FF0000", strokeWeight: 4 }}
+                  />
+                )}
+              </GoogleMap>
+            </LoadScript>
+          </div>
+        </section>
+  
+ 
+      </div>
+    );
+  
 }
 
 export default App;
