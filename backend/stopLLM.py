@@ -30,25 +30,25 @@ def choose_best_stop(stops):
     return response['choices'][0]['message']['content']
 
 def main():
-    start_location = "Champaign, IL"
+    start_location = "Urbana, IL"
     end_location = "Chicago, IL"
-    stop_type = "coffee shop"
+    stop_type = "gas station"
     
     # Find stops along the route with a target of 5 samples
     result = find_stops_along_route(start_location, end_location, stop_type, num_samples=5)
     stops = result.get('stops', [])
     
     if not stops:
-        print("No stops found along the route.")
+        print("No stops found along the route. Please try again.")
         return
     
-    print("Found the following stops:")
+    print("Found the following stops along the route:")
     for stop in stops:
         print(f"- {stop.get('name', 'Unknown')} at {stop.get('vicinity', 'N/A')}")
     
     # Get the LLM's recommendation for the best stop
     recommendation = choose_best_stop(stops)
-    print("\chatgpt's rec:")
+    print("\chatgpt's recommendation:")
     print(recommendation)
 
 if __name__ == '__main__':
