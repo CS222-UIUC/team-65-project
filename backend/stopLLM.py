@@ -16,13 +16,13 @@ def choose_best_stop(stops):
         )
     prompt += (
         "\nBased on the above details, please choose the best stop. "
-        "Please only say the name of the stop you deem to be the best."
+        "Please only say the name of the stop you deem to be the best, based on convenience nad ratings."
     )
     
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "You are a helpful assistant specialized in travel and local recommendations."},
+            {"role": "system", "content": "You are a helpful assistant specialized in travel and local recommendations. Please consider the ratings and reviews of the stops, as well as ease of access and reliability. ."},
             {"role": "user", "content": prompt}
         ]
     )
