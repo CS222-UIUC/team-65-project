@@ -55,10 +55,30 @@ export default function Home() {
         user_request: userInput,
         current_location: currentLocation,
       });
+      
+      if (!response.data || !response.data.itinerary) {
+        console.error('Invalid response format:', response.data);
+        return;
+      }
+      
+      console.log('Received itinerary:', response.data.itinerary);
+      console.log('Received map data:', response.data.map_data);
+      
       setItinerary(response.data.itinerary);
-      setMapData(response.data.map_data);
+      
+      // Only set map data if it's valid and doesn't contain an error
+      if (response.data.map_data && !response.data.map_data.error) {
+        setMapData(response.data.map_data);
+      } else {
+        console.error('Invalid map data:', response.data.map_data);
+        setMapData(null);
+      }
     } catch (error) {
       console.error('Error generating itinerary:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Response data:', error.response?.data);
+        console.error('Response status:', error.response?.status);
+      }
     }
   };
 
@@ -130,7 +150,9 @@ export default function Home() {
                 center={currentLocation || { lat: 0, lng: 0 }}
                 zoom={12}
               >
-                {mapData && (
+                {mapData && 
+                 mapData.overview_polyline && 
+                 google?.maps?.geometry?.encoding && (
                   <Polyline
                     path={google.maps.geometry.encoding.decodePath(mapData.overview_polyline)}
                     options={{
