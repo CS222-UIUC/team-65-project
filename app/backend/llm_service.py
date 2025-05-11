@@ -9,7 +9,7 @@ import json
 class LLMService:
     def __init__(self):
         self.llm = ChatOpenAI(
-            model_name="gpt-4o-mini",
+            model_name="gpt-4",
             temperature=0.7,
             openai_api_key=os.getenv("OPENAI_API_KEY")
         )
@@ -32,9 +32,12 @@ class LLMService:
         - id: unique identifier
         - type: activity type (e.g., "transportation", "attraction", "food", "accommodation")
         - description: detailed description
-        - location: coordinates or address
+        - location: MUST be a string containing the full address (e.g., "123 Main St, City, State, Country")
         - time: suggested time
         - duration: estimated duration
+        
+        Important: The location field MUST be a complete address string that can be geocoded.
+        Do not use coordinates or partial addresses.
         
         Format the response as a valid JSON array.
         """

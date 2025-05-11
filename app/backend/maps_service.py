@@ -1,6 +1,6 @@
 import googlemaps
 import os
-from typing import List, Dict
+from typing import List, Dict, Union
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
 
@@ -9,11 +9,22 @@ class MapsService:
         self.gmaps = googlemaps.Client(key=os.getenv("GOOGLE_MAPS_API_KEY"))
         self.geolocator = Nominatim(user_agent="trip_planner")
 
+    async def _format_location(self, location: Union[str, Dict]) -> str:
+        """Convert location to a format suitable for Google Maps API."""
+        if isinstance(location, dict):
+            if 'lat' in location and 'lng' in location:
+                return f"{location['lat']},{location['lng']}"
+            elif 'formatted_address' in location:
+                return location['formatted_address']
+        return str(location)
+
     async def get_route_data(self, itinerary: List[Dict]) -> Dict:
         waypoints = []
         for item in itinerary:
             if item.get("location"):
-                waypoints.append(item["location"])
+                formatted_location = await self._format_location(item["location"])
+                if formatted_location:
+                    waypoints.append(formatted_location)
 
         if len(waypoints) < 2:
             return {"error": "Not enough waypoints to create a route"}
@@ -24,7 +35,8 @@ class MapsService:
                 waypoints[0],
                 waypoints[-1],
                 waypoints=waypoints[1:-1] if len(waypoints) > 2 else None,
-                mode="driving"
+                mode="driving",
+                alternatives=False
             )
 
             if not directions:
@@ -59,6 +71,7 @@ class MapsService:
             return simplified_route
 
         except Exception as e:
+            print(f"Error generating route: {str(e)}")  # Add logging
             return {"error": str(e)}
 
     async def geocode_address(self, address: str) -> Dict:
