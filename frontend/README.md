@@ -1,70 +1,59 @@
-# Getting Started with Create React App
+# Frontend – Smart Trip Planner
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is the React.js frontend for the Smart Trip Planner project. It provides an interactive UI for planning road trips, visualizing routes, and getting AI-powered recommendations for stops along your journey.
 
-## Available Scripts
+## Features
+- Search for routes between two locations
+- Add custom stops or get AI-suggested stops (food, gas, attractions, etc.)
+- Visualize your route and stops on a Google Map
+- Export your trip to Google Maps for navigation
+- Chat with an AI assistant for personalized recommendations
 
-In the project directory, you can run:
+## Project Structure
+```
+frontend/
+├── src/
+│   ├── App.js         # Main app logic and UI
+│   ├── index.js       # Entry point
+│   └── components/
+│       └── Map.js     # Map rendering and route visualization
+├── public/            # Static assets
+├── package.json       # Dependencies and scripts
+└── dockerfile         # For containerized builds
+```
 
-### `npm start`
+## Setup & Development
+### Prerequisites
+- Node.js (v16+ recommended)
+- npm or yarn
+- (For map features) Google Maps API key (set as `REACT_APP_GOOGLE_MAPS_API_KEY` in a `.env` file)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Install & Run
+```bash
+cd frontend
+npm install
+npm start
+```
+The app will be available at [http://localhost:3000](http://localhost:3000).
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Environment Variables
+- `REACT_APP_GOOGLE_MAPS_API_KEY`: Your Google Maps API key for map rendering
 
-### `npm test`
+### Scripts
+- `npm start` – Start development server
+- `npm run build` – Build for production
+- `npm test` – Run tests
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## How it Works
+- **App.js**: Handles user input, communicates with the Flask backend for route and stop suggestions, and manages state.
+- **Map.js**: Renders the route and stops using Google Maps.
+- **API Calls**: Interacts with backend endpoints (`/get_route`, `/find_places`, `/llm_chat`) for trip planning and recommendations.
 
-### `npm run build`
+## Backend
+See [../backend/README.md](../backend/README.md) for backend API details and setup.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Customization
+- You can adjust the map style, add new features, or change the UI by editing components in `src/`.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## License
+MIT (or specify your license)
