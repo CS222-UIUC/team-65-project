@@ -2,3 +2,7 @@ backend/.env
 node_modules
 frontend/src/.env
 frontend/src/process.env
+app/backend/.env
+app/frontend/.env
+app/frontend/node_modules
+app/frontend/.next
