@@ -16,6 +16,9 @@ function App() {
   const [route, setRoute] = useState(null);
   const [placeType, setPlaceType] = useState("");
   const [foundPlaces, setFoundPlaces] = useState([]);
+  const getSegmentColor = (index, total) =>
+    `hsl(${Math.round((index / total) * 360)}, 80%, 50%)`;
+  const [googleMapSegments, setGoogleMapSegments] = useState([]);
   const [userLocation, setUserLocation] = useState({
     lat: 40.1164,
     lon: -88.2434,
@@ -70,71 +73,86 @@ function App() {
       });
       setRoute(response.data);
 
-      // Update the state for Google Maps API
-      const coordinates = response.data.routes[0].geometry.coordinates; // Assuming GeoJSON format
-      const path = coordinates.map(([lng, lat]) => ({ lat, lng })); // Convert to Google Maps format
-      setGoogleMapRoute(path); // Update the Google Maps route state
+      // // Update the state for Google Maps API
+      // const coordinates = response.data.routes[0].geometry.coordinates; // Assuming GeoJSON format
+      // const path = coordinates.map(([lng, lat]) => ({ lat, lng })); // Convert to Google Maps format
+      // setGoogleMapRoute(path); // Update the Google Maps route state
+
+      const coords = response.data.routes[0].geometry.coordinates; // [ [lng,lat], ... ]
+      const segmentCount = stops.length + 1;
+      const segLen = Math.floor(coords.length / segmentCount);
+
+      const segments = [];
+      for (let i = 0; i < segmentCount; i++) {
+        const startIdx = i * segLen;
+        const endIdx =
+          i === segmentCount - 1 ? coords.length : (i + 1) * segLen;
+        segments.push(
+          coords.slice(startIdx, endIdx).map(([lng, lat]) => ({ lat, lng }))
+        );
+      }
+      setGoogleMapSegments(segments);
     } catch (error) {
       console.error("Error fetching route:", error);
     }
   };
 
-  const handleFindPlaces = async () => {
-    try {
-      let requestData = { place_type: placeType };
+  // const handleFindPlaces = async () => {
+  //   try {
+  //     let requestData = { place_type: placeType };
 
-      if (route) {
-        requestData["route"] = route;
-      } else if (userLocation) {
-        requestData["location"] = userLocation;
-      } else {
-        alert("Unable to determine location.");
-        return;
-      }
+  //     if (route) {
+  //       requestData["route"] = route;
+  //     } else if (userLocation) {
+  //       requestData["location"] = userLocation;
+  //     } else {
+  //       alert("Unable to determine location.");
+  //       return;
+  //     }
 
-      const response = await axios.post(
-        "http://127.0.0.1:5000/find_places",
-        requestData
-      );
+  //     const response = await axios.post(
+  //       "http://127.0.0.1:5000/find_places",
+  //       requestData
+  //     );
 
-      console.log("Found Places Response:", response.data); // Debugging
+  //     console.log("Found Places Response:", response.data); // Debugging
 
-      if (Array.isArray(response.data)) {
-        setFoundPlaces(response.data);
-      } else {
-        console.error("Unexpected response format:", response.data);
-        setFoundPlaces([]);
-      }
-    } catch (error) {
-      console.error("Error fetching places:", error);
-    }
-  };
+  //     if (Array.isArray(response.data)) {
+  //       setFoundPlaces(response.data);
+  //     } else {
+  //       console.error("Unexpected response format:", response.data);
+  //       setFoundPlaces([]);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching places:", error);
+  //   }
+  // };
 
-  const handleLLM2 = async () => {
-    try {
-      let requestData = { place_type: placeType };
+  // const handleLLM2 = async () => {
+  //   try {
+  //     let requestData = { place_type: placeType };
 
-      if (route) {
-        requestData["route"] = route;
-      } else if (userLocation) {
-        requestData["location"] = userLocation;
-      } else {
-        alert("Unable to determine location.");
-        return;
-      }
+  //     if (route) {
+  //       requestData["route"] = route;
+  //     } else if (userLocation) {
+  //       requestData["location"] = userLocation;
+  //     } else {
+  //       alert("Unable to determine location.");
+  //       return;
+  //     }
 
-      const response = await axios.post(
-        "http://127.0.0.1:5000/find_places",
-        requestData
-      );
-      setFoundPlaces(response.data);
-    } catch (error) {
-      console.error("Error fetching places:", error);
-    }
-  };
+  //     const response = await axios.post(
+  //       "http://127.0.0.1:5000/find_places",
+  //       requestData
+  //     );
+  //     setFoundPlaces(response.data);
+  //   } catch (error) {
+  //     console.error("Error fetching places:", error);
+  //   }
+  // };
 
   const addPlaceToStops = (place) => {
-    setStops([...stops, place.name]);
+    setStops([...stops, place.address]);
   };
 
   // export the route to a google maps link
@@ -167,7 +185,7 @@ function App() {
         message: llmInput,
         start: start, // Include start location
         end: end, // Include end location
-        userLocation: userLocation, // Include user location
+        stops: stops, // Include stops
       });
 
       const llmResponse = response.data.response;
@@ -269,7 +287,7 @@ function App() {
             </div>
           </section>
 
-          {/* Find Places */}
+          {/* Find Places
           <section className="section">
             <h2 className="section-title">Find Places</h2>
             <div className="input-group">
@@ -284,7 +302,7 @@ function App() {
                 Find Places
               </button>
             </div>
-          </section>
+          </section> */}
 
           <section className="section">
             <h2 className="section-title">LLM Chat</h2>
@@ -357,12 +375,20 @@ function App() {
                   zoom={10}
                 >
                   <Marker position={center} />
-                  {googleMapRoute.length > 0 && (
+                  {googleMapSegments.map((path, idx) => (
                     <Polyline
-                      path={googleMapRoute}
-                      options={{ strokeColor: "#FF0000", strokeWeight: 4 }}
+                      key={idx}
+                      path={path}
+                      options={{
+                        strokeColor: getSegmentColor(
+                          idx,
+                          googleMapSegments.length
+                        ),
+                        strokeOpacity: 1.0,
+                        strokeWeight: 5,
+                      }}
                     />
-                  )}
+                  ))}
                 </GoogleMap>
               </LoadScript>
             </div>
@@ -398,6 +424,9 @@ function App() {
                     </p>
                     <p>
                       <strong>Description:</strong> {place.description}
+                    </p>
+                    <p>
+                      <strong>Address:</strong> {place.address}
                     </p>
                     <p>
                       <strong>Worth Visiting:</strong> {place.worth_visiting}

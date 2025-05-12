@@ -35,6 +35,7 @@ def parse_user_input(data):
     try:
         start = data.get("start", "unknown location")
         end = data.get("end", "unknown location")
+        stops = data.get("stops","unknown location")
         message = data.get("message", "")
         system_prompt = """
         You are a trip assistant helping a traveler find places along their route or near their location. When suggesting places, consider:
@@ -46,7 +47,7 @@ def parse_user_input(data):
         - cost of the place the user want to visit
         - The current location or route
         - Relevance to the user's needs
-        You must return a JSON array of place suggestions. Try to find 5 different places. Each place must be a dictionary with exactly these keys:
+        You must return a JSON array of place suggestions. Try to find 3 different places. Each place must be a dictionary with exactly these keys:
         - "name": string, the name of the place
         - "category": string, type of place (e.g., restaurant, landmark, gas station)
         - "address": string, address of the place
@@ -66,7 +67,7 @@ def parse_user_input(data):
             }
         ]
         """
-        prompt = f"I am driving from {start} to {end}. I want to know if {message}"
+        prompt = f"I am driving from {start} to {end}, with {stops} on the way. I want to know if {message}"
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[

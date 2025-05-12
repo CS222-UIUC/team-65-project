@@ -10,24 +10,12 @@ load_dotenv()  # loads GOOGLE_MAPS_KEY
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_KEY")
 
 
-def haversine(lat1, lng1, lat2, lng2):
-    """
-    Compute the great-circle distance between two points on the Earth (in meters).
-    """
-    R = 6371000  # Earth radius in meters
-    phi1, phi2 = math.radians(lat1), math.radians(lat2)
-    dphi = math.radians(lat2 - lat1)
-    dlambda = math.radians(lng2 - lng1)
-    a = (math.sin(dphi / 2) ** 2 +
-         math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2)
-    return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-
 def get_route(start, end):
     """
     Fetches the polyline route between start and end (strings or "lat,lng").
     Returns a list of (lat, lng) points.
     """
+    print(start, end)
     url = (
         "https://maps.googleapis.com/maps/api/directions/json"
         f"?origin={start}&destination={end}&key={GOOGLE_MAPS_API_KEY}"
