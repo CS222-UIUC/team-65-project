@@ -236,7 +236,7 @@ function App() {
             <div className="input-group">
               <textarea
                 className="llmTextBox"
-                placeholder="Chat with LLM"
+                placeholder="Enter places you wish to visit on your route."
                 value={llmInput}
                 onChange={(e) => setLlmInput(e.target.value)}
               />
@@ -244,15 +244,45 @@ function App() {
                 Send
               </button>
             </div>
-            <div className="chatbox">
-              <div className="chat-history">
-                {chatHistory.map((chat, index) => (
-                  <div key={index} className={`chat-message ${chat.sender}`}>
-                    <span>{chat.message}</span>
-                  </div>
+             <section className="section">
+            <h2 className="section-title">Top Recommendations</h2>
+            {llmRecommendations.length > 0 ? (
+              <ul className="recommendations-list">
+                {llmRecommendations.map((place, index) => (
+                  <li key={index} className="recommendation-item">
+                    <h3>{place.name}</h3>
+                    <p>
+                      <strong>Category:</strong> {place.category}
+                    </p>
+                    <p>
+                      <strong>Estimated Time:</strong>{" "}
+                      {place.estimated_time_minutes} minutes
+                    </p>
+                    <p>
+                      <strong>Description:</strong> {place.description}
+                    </p>
+                    <p>
+                      <strong>Address:</strong> {place.address}
+                    </p>
+                    <p>
+                      <strong>Worth Visiting:</strong> {place.worth_visiting}
+                    </p>
+                    <button
+                      className="button small"
+                      onClick={() => addPlaceToStops(place)}
+                    >
+                      Add to Stops
+                    </button>
+                  </li>
                 ))}
-              </div>
-            </div>
+              </ul>
+            ) : (
+              <p>
+                No recommendations yet. Use the LLM chat to get suggestions.
+              </p>
+            )}
+          </section>
+        
           </section>
 
           {/* Display Found Places */}
@@ -332,44 +362,7 @@ function App() {
           </section>
 
           {/* Recommendations Section */}
-          <section className="section">
-            <h2 className="section-title">Top Recommendations</h2>
-            {llmRecommendations.length > 0 ? (
-              <ul className="recommendations-list">
-                {llmRecommendations.map((place, index) => (
-                  <li key={index} className="recommendation-item">
-                    <h3>{place.name}</h3>
-                    <p>
-                      <strong>Category:</strong> {place.category}
-                    </p>
-                    <p>
-                      <strong>Estimated Time:</strong>{" "}
-                      {place.estimated_time_minutes} minutes
-                    </p>
-                    <p>
-                      <strong>Description:</strong> {place.description}
-                    </p>
-                    <p>
-                      <strong>Address:</strong> {place.address}
-                    </p>
-                    <p>
-                      <strong>Worth Visiting:</strong> {place.worth_visiting}
-                    </p>
-                    <button
-                      className="button small"
-                      onClick={() => addPlaceToStops(place)}
-                    >
-                      Add to Stops
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>
-                No recommendations yet. Use the LLM chat to get suggestions.
-              </p>
-            )}
-          </section>
+         
         </div>
       </main>
     </div>

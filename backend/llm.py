@@ -9,7 +9,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 system_prompt = """You are a trip assistant helping a traveler find places along their route or near their location. When suggesting places, consider:
 - The type of place the user is looking for
-- The maximum travel time specified
+- Making sure the location is not too far from the user's specified location, cannot be more than 30 minutes away
 - The current location or route
 - Relevance to the user's needs
 You must return a JSON array of place suggestions. Each place must be a dictionary with exactly these keys:
@@ -40,7 +40,7 @@ def parse_user_input(data):
         system_prompt = """
         You are a trip assistant helping a traveler find places along their route or near their location. When suggesting places, consider:
         - The type of place the user is looking for
-        - The maximum travel time specified
+        - The maximum travel time if specified
         = type of request if looking for food, gas, etc. look for places that are close by user location for less time relevant requests you can look further
         = if looking for a route, look for places along the route
         - look at places that have good reviews and are popular
