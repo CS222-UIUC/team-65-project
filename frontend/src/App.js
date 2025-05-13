@@ -16,6 +16,15 @@ function App() {
   const [route, setRoute] = useState(null);
   const [placeType, setPlaceType] = useState("");
   const [foundPlaces, setFoundPlaces] = useState([]);
+
+  const clearMap = () => {
+    setGoogleMapRoute([]);
+    setRoute(null);
+    setMapKey((prevKey) => prevKey + 1); // Update the map key to force re-render
+  };
+
+  const [mapKey, setMapKey] = useState(0);
+
   // const getSegmentColor = (index, total) =>
   //   `hsl(${Math.round((index / total) * 360)}, 80%, 50%)`;
   // const [googleMapSegments, setGoogleMapSegments] = useState([]);
@@ -65,29 +74,26 @@ function App() {
   };
 
   const handleSubmit = async () => {
-    setRoute(null);
-    setGoogleMapRoute([]);
-    try {  
-            console.log("Route data:","hi");
+    // Clear the map and route data before fetching a new route
+    clearMap();
+    try {
+      console.log("Route data:", "hi");
       const response = await axios.post("http://127.0.0.1:5000/get_route", {
         start,
         end,
         stops,
       });
-      console.log("Route data:","hi");
+      console.log("Route data:", "hi");
       setRoute(response.data);
       // // Update the state for Google Maps API
-  
+
       const coordinates = response.data.routes[0].geometry.coordinates; // Assuming GeoJSON format
       const path = coordinates.map(([lng, lat]) => ({ lat, lng })); // Convert to Google Maps format
       setGoogleMapRoute(path); // Update the Google Maps route state
-
     } catch (error) {
       console.error("Error fetching route:", error);
     }
   };
-
-
 
   const addPlaceToStops = (place) => {
     setStops([...stops, place.address]);
@@ -291,12 +297,12 @@ function App() {
                 googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
               >
                 <GoogleMap
+                  key={mapKey} // Adding key to force re-render
                   mapContainerStyle={containerStyle}
                   center={center}
                   zoom={10}
                 >
                   <Marker position={center} />
-        
                   {googleMapRoute.length > 0 && (
                     <Polyline
                       path={googleMapRoute}
@@ -311,18 +317,18 @@ function App() {
               </LoadScript>
             </div>
 
-            <button
+            {/* <button
               onClick={saveRouteToLocalStorage}
               style={{ marginTop: "10px" }}
             >
-              Save Route
-            </button>
+              Save Route */}
+            {/* </button>
             <button
               onClick={restoreRouteFromLocalStorage}
               style={{ marginTop: "10px" }}
             >
               Restore Route
-            </button>
+            </button> */}
           </section>
 
           {/* Recommendations Section */}
