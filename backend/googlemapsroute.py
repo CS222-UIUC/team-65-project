@@ -46,20 +46,6 @@ def sample_route_points(route_points, num_samples):
     return route_points[::step]
 
 
-def score_place(place, origin_lat, origin_lng, radius=500, max_reviews=500):
-    """
-    Example custom score combining rating, review count, and proximity.
-    Normalize each component to roughly [0,1] before weighting.
-    """
-    rating = place.get("rating", 0) / 5.0
-    reviews = place.get("user_ratings_total", 0)
-    reviews_norm = min(reviews, max_reviews) / max_reviews
-    plat = place["geometry"]["location"]["lat"]
-    plng = place["geometry"]["location"]["lng"]
-    dist = haversine(origin_lat, origin_lng, plat, plng) / radius  # >1 if outside
-    # weights: rating 60%, reviews 30%, penalty for distance 10%
-    return 0.6 * rating + 0.3 * reviews_norm - 0.1 * dist
-
 
 def get_stop_nearby(lat, lng, stop_type, radius=500,
                     mode="prominence", custom_score_fn=None):
