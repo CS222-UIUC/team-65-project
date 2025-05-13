@@ -131,17 +131,3 @@ if __name__ == "__main__":
     # Choose mode: "prominence", "distance", or "custom"
     mode = "custom"
 
-    result = find_stops_along_route(
-        start=start_location,
-        end=end_location,
-        stop_type=stop_type,
-        num_samples=8,
-        radius=800,
-        mode=mode,
-        custom_score_fn=score_place  # only used if mode=="custom"
-    )
-
-    print(f"Found {len(result['stops'])} stops along the route ({mode} mode):\n")
-    for stop in result["stops"]:
-        print(f"- {stop['name']} ({stop['vicinity']}): "
-              f"{stop['rating']}⭐️ from {stop['user_ratings_total']} reviews")

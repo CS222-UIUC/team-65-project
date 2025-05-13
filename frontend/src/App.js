@@ -65,91 +65,29 @@ function App() {
   };
 
   const handleSubmit = async () => {
-    try {
+    setRoute(null);
+    setGoogleMapRoute([]);
+    try {  
+            console.log("Route data:","hi");
       const response = await axios.post("http://127.0.0.1:5000/get_route", {
         start,
         end,
         stops,
       });
+      console.log("Route data:","hi");
       setRoute(response.data);
-
       // // Update the state for Google Maps API
+  
       const coordinates = response.data.routes[0].geometry.coordinates; // Assuming GeoJSON format
       const path = coordinates.map(([lng, lat]) => ({ lat, lng })); // Convert to Google Maps format
       setGoogleMapRoute(path); // Update the Google Maps route state
 
-      // const coords = response.data.routes[0].geometry.coordinates; // [ [lng,lat], ... ]
-      // const segmentCount = stops.length + 1;
-      // const segLen = Math.floor(coords.length / segmentCount);
-
-      // const segments = [];
-      // for (let i = 0; i < segmentCount; i++) {
-      //   const startIdx = i * segLen;
-      //   const endIdx =
-      //     i === segmentCount - 1 ? coords.length : (i + 1) * segLen;
-      //   segments.push(
-      //     coords.slice(startIdx, endIdx).map(([lng, lat]) => ({ lat, lng }))
-      //   );
-      // }
-      // setGoogleMapSegments(segments);
     } catch (error) {
       console.error("Error fetching route:", error);
     }
   };
 
-  // const handleFindPlaces = async () => {
-  //   try {
-  //     let requestData = { place_type: placeType };
 
-  //     if (route) {
-  //       requestData["route"] = route;
-  //     } else if (userLocation) {
-  //       requestData["location"] = userLocation;
-  //     } else {
-  //       alert("Unable to determine location.");
-  //       return;
-  //     }
-
-  //     const response = await axios.post(
-  //       "http://127.0.0.1:5000/find_places",
-  //       requestData
-  //     );
-
-  //     console.log("Found Places Response:", response.data); // Debugging
-
-  //     if (Array.isArray(response.data)) {
-  //       setFoundPlaces(response.data);
-  //     } else {
-  //       console.error("Unexpected response format:", response.data);
-  //       setFoundPlaces([]);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching places:", error);
-  //   }
-  // };
-
-  // const handleLLM2 = async () => {
-  //   try {
-  //     let requestData = { place_type: placeType };
-
-  //     if (route) {
-  //       requestData["route"] = route;
-  //     } else if (userLocation) {
-  //       requestData["location"] = userLocation;
-  //     } else {
-  //       alert("Unable to determine location.");
-  //       return;
-  //     }
-
-  //     const response = await axios.post(
-  //       "http://127.0.0.1:5000/find_places",
-  //       requestData
-  //     );
-  //     setFoundPlaces(response.data);
-  //   } catch (error) {
-  //     console.error("Error fetching places:", error);
-  //   }
-  // };
 
   const addPlaceToStops = (place) => {
     setStops([...stops, place.address]);
@@ -287,23 +225,6 @@ function App() {
             </div>
           </section>
 
-          {/* Find Places
-          <section className="section">
-            <h2 className="section-title">Find Places</h2>
-            <div className="input-group">
-              <input
-                className="textBox"
-                type="text"
-                placeholder="Search for places (e.g., gas stations, coffee shops)"
-                value={placeType}
-                onChange={(e) => setPlaceType(e.target.value)}
-              />
-              <button className="button primary" onClick={handleFindPlaces}>
-                Find Places
-              </button>
-            </div>
-          </section> */}
-
           <section className="section">
             <h2 className="section-title">LLM Chat</h2>
             <div className="input-group">
@@ -375,20 +296,7 @@ function App() {
                   zoom={10}
                 >
                   <Marker position={center} />
-                  {/* {googleMapSegments.map((path, idx) => (
-                    <Polyline
-                      key={idx}
-                      path={path}
-                      options={{
-                        strokeColor: getSegmentColor(
-                          idx,
-                          googleMapSegments.length
-                        ),
-                        strokeOpacity: 1.0,
-                        strokeWeight: 5,
-                      }}
-                    />
-                  ))} */}
+        
                   {googleMapRoute.length > 0 && (
                     <Polyline
                       path={googleMapRoute}
