@@ -16,9 +16,9 @@ function App() {
   const [route, setRoute] = useState(null);
   const [placeType, setPlaceType] = useState("");
   const [foundPlaces, setFoundPlaces] = useState([]);
-  const getSegmentColor = (index, total) =>
-    `hsl(${Math.round((index / total) * 360)}, 80%, 50%)`;
-  const [googleMapSegments, setGoogleMapSegments] = useState([]);
+  // const getSegmentColor = (index, total) =>
+  //   `hsl(${Math.round((index / total) * 360)}, 80%, 50%)`;
+  // const [googleMapSegments, setGoogleMapSegments] = useState([]);
   const [userLocation, setUserLocation] = useState({
     lat: 40.1164,
     lon: -88.2434,
@@ -74,24 +74,24 @@ function App() {
       setRoute(response.data);
 
       // // Update the state for Google Maps API
-      // const coordinates = response.data.routes[0].geometry.coordinates; // Assuming GeoJSON format
-      // const path = coordinates.map(([lng, lat]) => ({ lat, lng })); // Convert to Google Maps format
-      // setGoogleMapRoute(path); // Update the Google Maps route state
+      const coordinates = response.data.routes[0].geometry.coordinates; // Assuming GeoJSON format
+      const path = coordinates.map(([lng, lat]) => ({ lat, lng })); // Convert to Google Maps format
+      setGoogleMapRoute(path); // Update the Google Maps route state
 
-      const coords = response.data.routes[0].geometry.coordinates; // [ [lng,lat], ... ]
-      const segmentCount = stops.length + 1;
-      const segLen = Math.floor(coords.length / segmentCount);
+      // const coords = response.data.routes[0].geometry.coordinates; // [ [lng,lat], ... ]
+      // const segmentCount = stops.length + 1;
+      // const segLen = Math.floor(coords.length / segmentCount);
 
-      const segments = [];
-      for (let i = 0; i < segmentCount; i++) {
-        const startIdx = i * segLen;
-        const endIdx =
-          i === segmentCount - 1 ? coords.length : (i + 1) * segLen;
-        segments.push(
-          coords.slice(startIdx, endIdx).map(([lng, lat]) => ({ lat, lng }))
-        );
-      }
-      setGoogleMapSegments(segments);
+      // const segments = [];
+      // for (let i = 0; i < segmentCount; i++) {
+      //   const startIdx = i * segLen;
+      //   const endIdx =
+      //     i === segmentCount - 1 ? coords.length : (i + 1) * segLen;
+      //   segments.push(
+      //     coords.slice(startIdx, endIdx).map(([lng, lat]) => ({ lat, lng }))
+      //   );
+      // }
+      // setGoogleMapSegments(segments);
     } catch (error) {
       console.error("Error fetching route:", error);
     }
@@ -375,7 +375,7 @@ function App() {
                   zoom={10}
                 >
                   <Marker position={center} />
-                  {googleMapSegments.map((path, idx) => (
+                  {/* {googleMapSegments.map((path, idx) => (
                     <Polyline
                       key={idx}
                       path={path}
@@ -388,7 +388,17 @@ function App() {
                         strokeWeight: 5,
                       }}
                     />
-                  ))}
+                  ))} */}
+                  {googleMapRoute.length > 0 && (
+                    <Polyline
+                      path={googleMapRoute}
+                      options={{
+                        strokeColor: "#FF0000",
+                        strokeOpacity: 1.0,
+                        strokeWeight: 4,
+                      }}
+                    />
+                  )}
                 </GoogleMap>
               </LoadScript>
             </div>
