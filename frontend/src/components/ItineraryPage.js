@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoogleMap, LoadScript, Marker, Polyline } from "@react-google-maps/api";
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -12,16 +12,90 @@ function ItineraryPage() {
   const [mapError, setMapError] = useState(null);
   const [startLocation, setStartLocation] = useState("");
   const [endLocation, setEndLocation] = useState("");
+  const [mapCenter, setMapCenter] = useState({ lat: 40.1164, lng: -88.2434 });
+  const [mapZoom, setMapZoom] = useState(10);
+  const [startCoords, setStartCoords] = useState(null);
+  const [endCoords, setEndCoords] = useState(null);
 
   const containerStyle = {
     width: "100%",
     height: "400px",
   };
 
-  const center = {
-    lat: 40.1164,
-    lng: -88.2434,
-  };
+  // Geocode locations when they change
+  useEffect(() => {
+    const geocodeLocation = async (address, isStart) => {
+      if (!address) return;
+      
+      try {
+        const geocoder = new window.google.maps.Geocoder();
+        const result = await geocoder.geocode({ address });
+        
+        if (result.results[0]) {
+          const location = result.results[0].geometry.location;
+          const coords = {
+            lat: location.lat(),
+            lng: location.lng()
+          };
+          
+          if (isStart) {
+            setStartCoords(coords);
+          } else {
+            setEndCoords(coords);
+          }
+        }
+      } catch (error) {
+        console.error(`Error geocoding ${isStart ? 'start' : 'end'} location:`, error);
+      }
+    };
+
+    if (startLocation) {
+      geocodeLocation(startLocation, true);
+    }
+    if (endLocation) {
+      geocodeLocation(endLocation, false);
+    }
+  }, [startLocation, endLocation]);
+
+  // Update map center and zoom when coordinates change
+  useEffect(() => {
+    if (startCoords && endCoords) {
+      // Calculate center point
+      const center = {
+        lat: (startCoords.lat + endCoords.lat) / 2,
+        lng: (startCoords.lng + endCoords.lng) / 2
+      };
+      setMapCenter(center);
+
+      // Calculate distance between points
+      const R = 6371; // Earth's radius in km
+      const dLat = (endCoords.lat - startCoords.lat) * Math.PI / 180;
+      const dLon = (endCoords.lng - startCoords.lng) * Math.PI / 180;
+      const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(startCoords.lat * Math.PI / 180) * Math.cos(endCoords.lat * Math.PI / 180) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const distance = R * c;
+
+      // Set zoom level based on distance
+      // Closer points = higher zoom level
+      let zoom = 10;
+      if (distance < 1) zoom = 15;
+      else if (distance < 5) zoom = 13;
+      else if (distance < 20) zoom = 11;
+      else if (distance < 50) zoom = 9;
+      else zoom = 7;
+
+      setMapZoom(zoom);
+    } else if (startCoords) {
+      setMapCenter(startCoords);
+      setMapZoom(13);
+    } else if (endCoords) {
+      setMapCenter(endCoords);
+      setMapZoom(13);
+    }
+  }, [startCoords, endCoords]);
 
   const handleRemoveItem = (index) => {
     const newItems = [...itineraryItems];
@@ -217,9 +291,27 @@ function ItineraryPage() {
             <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}>
               <GoogleMap
                 mapContainerStyle={containerStyle}
-                center={center}
-                zoom={10}
+                center={mapCenter}
+                zoom={mapZoom}
               >
+                {startCoords && (
+                  <Marker
+                    position={startCoords}
+                    title="Start Location"
+                    icon={{
+                      url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+                    }}
+                  />
+                )}
+                {endCoords && (
+                  <Marker
+                    position={endCoords}
+                    title="End Location"
+                    icon={{
+                      url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+                    }}
+                  />
+                )}
                 {routeData?.markers?.map((marker, index) => (
                   <Marker
                     key={index}
@@ -230,7 +322,7 @@ function ItineraryPage() {
                       color: "white",
                     }}
                     icon={{
-                      url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+                      url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
                     }}
                   />
                 ))}
