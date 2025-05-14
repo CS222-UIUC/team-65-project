@@ -132,6 +132,26 @@ function ItineraryPage() {
     }
   };
 
+  const handleClearItinerary = async () => {
+    try {
+      const response = await axios.post("http://127.0.0.1:5000/clear_itinerary");
+      setItineraryItems([]);
+      setRouteData(null);
+      setChatHistory([]);
+      setMapError(null);
+      setChatHistory((prev) => [
+        ...prev,
+        { sender: "llm", message: "Itinerary cleared. You can start planning a new trip!" },
+      ]);
+    } catch (error) {
+      console.error("Error clearing itinerary:", error);
+      setChatHistory((prev) => [
+        ...prev,
+        { sender: "llm", message: "Error clearing itinerary. Please try again." },
+      ]);
+    }
+  };
+
   const handleLLM = async () => {
     if (!llmInput.trim()) return;
 
@@ -155,10 +175,8 @@ function ItineraryPage() {
       console.log("Backend response:", response.data);
 
       if (response.data.itinerary) {
-        // Update itinerary items
         setItineraryItems(response.data.itinerary);
         
-        // Update route if available
         if (response.data.route && !response.data.route.error) {
           setRouteData(response.data.route);
           setChatHistory((prev) => [
@@ -245,7 +263,16 @@ function ItineraryPage() {
       </Link>
       <div className="itinerary-content">
         <div className="itinerary-container">
-          <h2>Your Itinerary</h2>
+          <div className="itinerary-header">
+            <h2>Your Itinerary</h2>
+            <button 
+              className="clear-button"
+              onClick={handleClearItinerary}
+              disabled={itineraryItems.length === 0}
+            >
+              Clear Itinerary
+            </button>
+          </div>
           <div className="itinerary-list">
             {itineraryItems.map((item, index) => (
               <div key={index} className="itinerary-item">
