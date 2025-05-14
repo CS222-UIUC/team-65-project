@@ -32,7 +32,8 @@ class LLMService:
         - id: unique identifier
         - type: activity type (e.g., "transportation", "attraction", "food", "accommodation")
         - description: detailed description
-        - location: MUST be a string containing the full address (e.g., "123 Main St, City, State, Country")
+        - address: MUST be a string containing the full address (e.g., "123 Main St, City, State, Country")
+        - location: MUST be a string containing the latitude and longitude (e.g., "40.7128,-74.0060")
         - time: suggested time
         - duration: estimated duration
         

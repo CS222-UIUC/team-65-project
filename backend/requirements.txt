@@ -8,3 +8,8 @@ dotenv
 geopy
 googlemaps
 datetime
+langchain==0.1.17
+langchain_core
+langchain_openai==0.1.6
+langchain_community==0.0.38
+
