@@ -6,10 +6,12 @@ import './ItineraryPage.css';
 
 function ItineraryPage() {
   const [itineraryItems, setItineraryItems] = useState([]);
-  const [llmInput, setLlmInput] = useState('');
-  const [chatHistory, setChatHistory] = useState([]);
   const [routeData, setRouteData] = useState(null);
+  const [llmInput, setLlmInput] = useState("");
+  const [chatHistory, setChatHistory] = useState([]);
   const [mapError, setMapError] = useState(null);
+  const [startLocation, setStartLocation] = useState("");
+  const [endLocation, setEndLocation] = useState("");
 
   const containerStyle = {
     width: "100%",
@@ -64,14 +66,16 @@ function ItineraryPage() {
 
     try {
       console.log("Sending request to backend with:", {
-        user_request: llmInput
+        user_request: llmInput,
+        start_location: startLocation || "Times Square, New York, NY",
+        end_location: endLocation || startLocation || "Times Square, New York, NY"
       });
 
       const response = await axios.post("http://127.0.0.1:5000/generate_itinerary", {
         user_request: llmInput,
-        start_location: "Times Square, New York, NY",  // Default start location
-        end_location: "Times Square, New York, NY",    // Default end location
-        current_location: { lat: 40.7580, lng: -73.9855 }  // Times Square coordinates
+        start_location: startLocation || "Times Square, New York, NY",
+        end_location: endLocation || startLocation || "Times Square, New York, NY",
+        current_location: { lat: 40.7580, lng: -73.9855 }
       });
 
       console.log("Backend response:", response.data);
@@ -163,9 +167,8 @@ function ItineraryPage() {
   return (
     <div className="itinerary-page">
       <Link to="/" className="back-button">
-        ← Back to Trip Planner
+        Back to Home
       </Link>
-      
       <div className="itinerary-content">
         <div className="itinerary-container">
           <h2>Your Itinerary</h2>
@@ -185,8 +188,31 @@ function ItineraryPage() {
             ))}
           </div>
         </div>
-
         <div className="right-panel">
+          <div className="location-inputs">
+            <div className="location-input-group">
+              <label htmlFor="start-location">Start Location</label>
+              <input
+                id="start-location"
+                type="text"
+                className="location-input"
+                placeholder="Enter start location"
+                value={startLocation}
+                onChange={(e) => setStartLocation(e.target.value)}
+              />
+            </div>
+            <div className="location-input-group">
+              <label htmlFor="end-location">End Location</label>
+              <input
+                id="end-location"
+                type="text"
+                className="location-input"
+                placeholder="Enter end location (optional)"
+                value={endLocation}
+                onChange={(e) => setEndLocation(e.target.value)}
+              />
+            </div>
+          </div>
           <div className="map-container">
             <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}>
               <GoogleMap
@@ -227,7 +253,6 @@ function ItineraryPage() {
               </div>
             )}
           </div>
-
           <div className="chat-container">
             <div className="chat-history">
               {chatHistory.map((chat, index) => (
