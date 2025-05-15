@@ -37,11 +37,16 @@ function HomePage() {
   const [placeType, setPlaceType] = useState("");
   const [foundPlaces, setFoundPlaces] = useState([]);
   const [markers, setMarkers] = useState([]);
+  const [startPosition, setStartPosition] = useState(null);
+  const [endPosition, setEndPosition] = useState(null);
 
   const clearMap = () => {
     setGoogleMapRoute([]);
     setRoute(null);
-    setMapKey((prevKey) => prevKey + 1); // Update the map key to force re-render
+    setStartPosition(null);
+    setEndPosition(null);
+    setMarkers([]);
+    setMapKey((prevKey) => prevKey + 1);
   };
 
   const [mapKey, setMapKey] = useState(0);
@@ -93,9 +98,13 @@ function HomePage() {
     newStops[index] = value;
     setStops(newStops);
   };
-
   const handleSubmit = async () => {
     clearMap();
+
+    if (!start || !end) {
+      alert("Please enter both start and end locations.");
+      return;
+    }
 
     try {
       const response = await axios.post("http://127.0.0.1:5000/get_route", {
@@ -121,9 +130,15 @@ function HomePage() {
         console.error("No polyline found in response.");
       }
 
-      const markerPromises = stops.map((stop) => getCoordinates(stop));
-      const markerPositions = await Promise.all(markerPromises);
-      setMarkers(markerPositions.filter((pos) => pos !== null));
+      const [startCoord, endCoord, ...stopCoords] = await Promise.all([
+        getCoordinates(start),
+        getCoordinates(end),
+        ...stops.map((stop) => getCoordinates(stop)),
+      ]);
+
+      setStartPosition(startCoord);
+      setEndPosition(endCoord);
+      setMarkers(stopCoords.filter((pos) => pos));
     } catch (error) {
       console.error("Error fetching route:", error);
     }
@@ -255,12 +270,6 @@ function HomePage() {
                 <button className="button primary" onClick={handleSubmit}>
                   Get Route
                 </button>
-                <button
-                  className="button secondary"
-                  onClick={exportToGoogleMaps}
-                >
-                  Export to Google Maps
-                </button>
               </div>
             </div>
           </section>
@@ -365,10 +374,18 @@ function HomePage() {
                   center={center}
                   zoom={10}
                 >
-                  <Marker position={center} />
+                  {startPosition && (
+                    <Marker position={startPosition} label="Start" />
+                  )}
                   {markers.map((marker, index) => (
-                    <Marker key={index} position={marker} />
+                    <Marker
+                      key={index}
+                      position={marker}
+                      label={`Stop ${index + 1}`}
+                    />
                   ))}
+                  {endPosition && <Marker position={endPosition} label="End" />}
+
                   {googleMapRoute.length > 0 && (
                     <Polyline
                       path={googleMapRoute}
@@ -382,7 +399,7 @@ function HomePage() {
                 </GoogleMap>
               </LoadScript>
             </div>
-            <div className="button-group" style={{ marginTop: '20px' }}>
+            <div className="button-group" style={{ marginTop: "20px" }}>
               <Link to="/itinerary" className="button primary">
                 View Itinerary
               </Link>

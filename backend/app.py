@@ -163,7 +163,7 @@ def get_route():
 
     # Construct the Directions API request
     base_url = "https://maps.googleapis.com/maps/api/directions/json"
-    api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    api_key = os.getenv("GOOGLE_MAPS_KEY")
 
    
     if not api_key:

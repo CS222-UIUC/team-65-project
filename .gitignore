@@ -7,3 +7,4 @@ app/backend/.env
 app/frontend/.env
 app/frontend/node_modules
 app/frontend/.next
+/backend/__pycache__
