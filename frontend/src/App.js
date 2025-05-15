@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import polyline from "@mapbox/polyline";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 
 // import Map from "./components/Map";
+import polyline from "@mapbox/polyline";
+
 import "./App.css";
 import {
   GoogleMap,
@@ -10,8 +12,9 @@ import {
   Marker,
   Polyline,
 } from "@react-google-maps/api";
+import ItineraryPage from "./components/ItineraryPage";
 
-function App() {
+function HomePage() {
   const [start, setStart] = useState("");
   const getCoordinates = async (address) => {
     try {
@@ -209,7 +212,7 @@ function App() {
       </header>
 
       <main className="main-content">
-        <div class="box1">
+        <div className="box1">
           {/* Start and End Locations */}
           <section className="section">
             <h2 className="section-title">Plan Your Trip</h2>
@@ -379,25 +382,28 @@ function App() {
                 </GoogleMap>
               </LoadScript>
             </div>
-
-            {/* <button
-              onClick={saveRouteToLocalStorage}
-              style={{ marginTop: "10px" }}
-            >
-              Save Route */}
-            {/* </button>
-            <button
-              onClick={restoreRouteFromLocalStorage}
-              style={{ marginTop: "10px" }}
-            >
-              Restore Route
-            </button> */}
+            <div className="button-group" style={{ marginTop: '20px' }}>
+              <Link to="/itinerary" className="button primary">
+                View Itinerary
+              </Link>
+            </div>
           </section>
 
           {/* Recommendations Section */}
         </div>
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/itinerary" element={<ItineraryPage />} />
+      </Routes>
+    </Router>
   );
 }
 
