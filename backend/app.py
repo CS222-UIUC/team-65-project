@@ -4,6 +4,7 @@ from urllib.parse import quote
 import requests
 import json
 from googlemapsroute import find_stops_along_route
+from urllib.parse import urljoin, urlencode
 from dotenv import load_dotenv
 import os
 import openai
@@ -160,49 +161,30 @@ def get_route():
     if not start_location or not end_location:
         return jsonify({"error": "Start and End locations are required"}), 400
 
-    start_coords = get_coordinates(start_location)
-    end_coords = get_coordinates(end_location)
-    if not start_coords or not end_coords:
-        return jsonify({"error": "Could not get coordinates for locations"}), 400
+    # Construct the Directions API request
+    base_url = "https://maps.googleapis.com/maps/api/directions/json"
+    api_key = os.getenv("GOOGLE_MAPS_API_KEY")
 
-    stop_coords = []
-    for stop in stop_locations:
-        coords = get_coordinates(stop)
-        if coords:
-            stop_coords.append(coords)
-    waypoints = [f"{start_coords[1]},{start_coords[0]}"] + \
-                [f"{lon},{lat}" for lat, lon in stop_coords] + \
-                [f"{end_coords[1]},{end_coords[0]}"]
+   
+    if not api_key:
+        return jsonify({"error": "Google Maps API key not found in environment variables"}), 500
 
-    try:
-        osrm_url = f"{OSRM_SERVER}/route/v1/driving/" + ";".join(waypoints) + "?overview=full&geometries=geojson"
-        osrm_response = requests.get(osrm_url)
-        
-        # Check if the response is successful
-        if osrm_response.status_code != 200:
-            return jsonify({
-                "error": f"OSRM server returned status code {osrm_response.status_code}",
-                "details": osrm_response.text
-            }), 500
+    params = {
+        "origin": start_location,
+        "destination": end_location,
+        "key": api_key,
+    }
 
-        # Try to parse the JSON response
-        try:
-            route_data = osrm_response.json()
-            return jsonify(route_data)
-        except json.JSONDecodeError as e:
-            return jsonify({
-                "error": "Invalid response from OSRM server",
-                "details": str(e),
-                "response_text": osrm_response.text[:200]  # Include first 200 chars of response
-            }), 500
+    if stop_locations:
+        # Format stops as a pipe-separated list
+        params["waypoints"] = "|".join(stop_locations)
 
-    except requests.RequestException as e:
-        return jsonify({
-            "error": "Failed to connect to OSRM server",
-            "details": str(e)
-        }), 500
+    response = requests.get(base_url, params=params)
+    if response.status_code != 200:
+        return jsonify({"error": "Failed to fetch route from Google Maps API"}), 500
 
-@app.route("/clear_itinerary", methods=["POST"])
+    return jsonify(response.json())
+app.route("/clear_itinerary", methods=["POST"])
 def clear_itinerary():
     try:
         llm_service.clear_itinerary()
@@ -210,6 +192,5 @@ def clear_itinerary():
     except Exception as e:
         print(f"Error clearing itinerary: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
 if __name__ == "__main__":
     app.run(debug=True)
