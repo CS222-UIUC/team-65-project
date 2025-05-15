@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import polyline from "@mapbox/polyline";
+
 // import Map from "./components/Map";
 import "./App.css";
 import {
@@ -11,11 +13,36 @@ import {
 
 function App() {
   const [start, setStart] = useState("");
+  const getCoordinates = async (address) => {
+    try {
+      const response = await axios.get(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          address
+        )}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
+      );
+      const location = response.data.results[0].geometry.location;
+      return { lat: location.lat, lng: location.lng };
+    } catch (error) {
+      console.error("Error geocoding address:", error);
+      return null;
+    }
+  };
+
   const [end, setEnd] = useState("");
   const [stops, setStops] = useState([]);
   const [route, setRoute] = useState(null);
   const [placeType, setPlaceType] = useState("");
   const [foundPlaces, setFoundPlaces] = useState([]);
+  const [markers, setMarkers] = useState([]);
+
+  const clearMap = () => {
+    setGoogleMapRoute([]);
+    setRoute(null);
+    setMapKey((prevKey) => prevKey + 1); // Update the map key to force re-render
+  };
+
+  const [mapKey, setMapKey] = useState(0);
+
   // const getSegmentColor = (index, total) =>
   //   `hsl(${Math.round((index / total) * 360)}, 80%, 50%)`;
   // const [googleMapSegments, setGoogleMapSegments] = useState([]);
@@ -65,91 +92,39 @@ function App() {
   };
 
   const handleSubmit = async () => {
+    clearMap();
+
     try {
       const response = await axios.post("http://127.0.0.1:5000/get_route", {
         start,
         end,
         stops,
       });
-      setRoute(response.data);
 
-      // // Update the state for Google Maps API
-      const coordinates = response.data.routes[0].geometry.coordinates; // Assuming GeoJSON format
-      const path = coordinates.map(([lng, lat]) => ({ lat, lng })); // Convert to Google Maps format
-      setGoogleMapRoute(path); // Update the Google Maps route state
+      const routeData = response.data;
 
-      // const coords = response.data.routes[0].geometry.coordinates; // [ [lng,lat], ... ]
-      // const segmentCount = stops.length + 1;
-      // const segLen = Math.floor(coords.length / segmentCount);
+      if (
+        routeData.routes &&
+        routeData.routes.length > 0 &&
+        routeData.routes[0].overview_polyline
+      ) {
+        const encodedPath = routeData.routes[0].overview_polyline.points;
+        const decodedPath = polyline.decode(encodedPath).map(([lat, lng]) => ({
+          lat,
+          lng,
+        }));
+        setGoogleMapRoute(decodedPath);
+      } else {
+        console.error("No polyline found in response.");
+      }
 
-      // const segments = [];
-      // for (let i = 0; i < segmentCount; i++) {
-      //   const startIdx = i * segLen;
-      //   const endIdx =
-      //     i === segmentCount - 1 ? coords.length : (i + 1) * segLen;
-      //   segments.push(
-      //     coords.slice(startIdx, endIdx).map(([lng, lat]) => ({ lat, lng }))
-      //   );
-      // }
-      // setGoogleMapSegments(segments);
+      const markerPromises = stops.map((stop) => getCoordinates(stop));
+      const markerPositions = await Promise.all(markerPromises);
+      setMarkers(markerPositions.filter((pos) => pos !== null));
     } catch (error) {
       console.error("Error fetching route:", error);
     }
   };
-
-  // const handleFindPlaces = async () => {
-  //   try {
-  //     let requestData = { place_type: placeType };
-
-  //     if (route) {
-  //       requestData["route"] = route;
-  //     } else if (userLocation) {
-  //       requestData["location"] = userLocation;
-  //     } else {
-  //       alert("Unable to determine location.");
-  //       return;
-  //     }
-
-  //     const response = await axios.post(
-  //       "http://127.0.0.1:5000/find_places",
-  //       requestData
-  //     );
-
-  //     console.log("Found Places Response:", response.data); // Debugging
-
-  //     if (Array.isArray(response.data)) {
-  //       setFoundPlaces(response.data);
-  //     } else {
-  //       console.error("Unexpected response format:", response.data);
-  //       setFoundPlaces([]);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching places:", error);
-  //   }
-  // };
-
-  // const handleLLM2 = async () => {
-  //   try {
-  //     let requestData = { place_type: placeType };
-
-  //     if (route) {
-  //       requestData["route"] = route;
-  //     } else if (userLocation) {
-  //       requestData["location"] = userLocation;
-  //     } else {
-  //       alert("Unable to determine location.");
-  //       return;
-  //     }
-
-  //     const response = await axios.post(
-  //       "http://127.0.0.1:5000/find_places",
-  //       requestData
-  //     );
-  //     setFoundPlaces(response.data);
-  //   } catch (error) {
-  //     console.error("Error fetching places:", error);
-  //   }
-  // };
 
   const addPlaceToStops = (place) => {
     setStops([...stops, place.address]);
@@ -287,29 +262,12 @@ function App() {
             </div>
           </section>
 
-          {/* Find Places
-          <section className="section">
-            <h2 className="section-title">Find Places</h2>
-            <div className="input-group">
-              <input
-                className="textBox"
-                type="text"
-                placeholder="Search for places (e.g., gas stations, coffee shops)"
-                value={placeType}
-                onChange={(e) => setPlaceType(e.target.value)}
-              />
-              <button className="button primary" onClick={handleFindPlaces}>
-                Find Places
-              </button>
-            </div>
-          </section> */}
-
           <section className="section">
             <h2 className="section-title">LLM Chat</h2>
             <div className="input-group">
               <textarea
                 className="llmTextBox"
-                placeholder="Chat with LLM"
+                placeholder="Enter places you wish to visit on your route."
                 value={llmInput}
                 onChange={(e) => setLlmInput(e.target.value)}
               />
@@ -317,15 +275,44 @@ function App() {
                 Send
               </button>
             </div>
-            <div className="chatbox">
-              <div className="chat-history">
-                {chatHistory.map((chat, index) => (
-                  <div key={index} className={`chat-message ${chat.sender}`}>
-                    <span>{chat.message}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <section className="section">
+              <h2 className="section-title">Top Recommendations</h2>
+              {llmRecommendations.length > 0 ? (
+                <ul className="recommendations-list">
+                  {llmRecommendations.map((place, index) => (
+                    <li key={index} className="recommendation-item">
+                      <h3>{place.name}</h3>
+                      <p>
+                        <strong>Category:</strong> {place.category}
+                      </p>
+                      <p>
+                        <strong>Estimated Time:</strong>{" "}
+                        {place.estimated_time_minutes} minutes
+                      </p>
+                      <p>
+                        <strong>Description:</strong> {place.description}
+                      </p>
+                      <p>
+                        <strong>Address:</strong> {place.address}
+                      </p>
+                      <p>
+                        <strong>Worth Visiting:</strong> {place.worth_visiting}
+                      </p>
+                      <button
+                        className="button small"
+                        onClick={() => addPlaceToStops(place)}
+                      >
+                        Add to Stops
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>
+                  No recommendations yet. Use the LLM chat to get suggestions.
+                </p>
+              )}
+            </section>
           </section>
 
           {/* Display Found Places */}
@@ -370,25 +357,15 @@ function App() {
                 googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
               >
                 <GoogleMap
+                  key={mapKey}
                   mapContainerStyle={containerStyle}
                   center={center}
                   zoom={10}
                 >
                   <Marker position={center} />
-                  {/* {googleMapSegments.map((path, idx) => (
-                    <Polyline
-                      key={idx}
-                      path={path}
-                      options={{
-                        strokeColor: getSegmentColor(
-                          idx,
-                          googleMapSegments.length
-                        ),
-                        strokeOpacity: 1.0,
-                        strokeWeight: 5,
-                      }}
-                    />
-                  ))} */}
+                  {markers.map((marker, index) => (
+                    <Marker key={index} position={marker} />
+                  ))}
                   {googleMapRoute.length > 0 && (
                     <Polyline
                       path={googleMapRoute}
@@ -403,59 +380,21 @@ function App() {
               </LoadScript>
             </div>
 
-            <button
+            {/* <button
               onClick={saveRouteToLocalStorage}
               style={{ marginTop: "10px" }}
             >
-              Save Route
-            </button>
+              Save Route */}
+            {/* </button>
             <button
               onClick={restoreRouteFromLocalStorage}
               style={{ marginTop: "10px" }}
             >
               Restore Route
-            </button>
+            </button> */}
           </section>
 
           {/* Recommendations Section */}
-          <section className="section">
-            <h2 className="section-title">Top Recommendations</h2>
-            {llmRecommendations.length > 0 ? (
-              <ul className="recommendations-list">
-                {llmRecommendations.map((place, index) => (
-                  <li key={index} className="recommendation-item">
-                    <h3>{place.name}</h3>
-                    <p>
-                      <strong>Category:</strong> {place.category}
-                    </p>
-                    <p>
-                      <strong>Estimated Time:</strong>{" "}
-                      {place.estimated_time_minutes} minutes
-                    </p>
-                    <p>
-                      <strong>Description:</strong> {place.description}
-                    </p>
-                    <p>
-                      <strong>Address:</strong> {place.address}
-                    </p>
-                    <p>
-                      <strong>Worth Visiting:</strong> {place.worth_visiting}
-                    </p>
-                    <button
-                      className="button small"
-                      onClick={() => addPlaceToStops(place)}
-                    >
-                      Add to Stops
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>
-                No recommendations yet. Use the LLM chat to get suggestions.
-              </p>
-            )}
-          </section>
         </div>
       </main>
     </div>
