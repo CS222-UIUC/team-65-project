@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import polyline from "@mapbox/polyline";
+
 // import Map from "./components/Map";
 import "./App.css";
 import {
@@ -11,11 +13,27 @@ import {
 
 function App() {
   const [start, setStart] = useState("");
+  const getCoordinates = async (address) => {
+    try {
+      const response = await axios.get(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          address
+        )}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
+      );
+      const location = response.data.results[0].geometry.location;
+      return { lat: location.lat, lng: location.lng };
+    } catch (error) {
+      console.error("Error geocoding address:", error);
+      return null;
+    }
+  };
+
   const [end, setEnd] = useState("");
   const [stops, setStops] = useState([]);
   const [route, setRoute] = useState(null);
   const [placeType, setPlaceType] = useState("");
   const [foundPlaces, setFoundPlaces] = useState([]);
+  const [markers, setMarkers] = useState([]);
 
   const clearMap = () => {
     setGoogleMapRoute([]);
@@ -74,22 +92,35 @@ function App() {
   };
 
   const handleSubmit = async () => {
-    // Clear the map and route data before fetching a new route
     clearMap();
+
     try {
-      console.log("Route data:", "hi");
       const response = await axios.post("http://127.0.0.1:5000/get_route", {
         start,
         end,
         stops,
       });
-      console.log("Route data:", "hi");
-      setRoute(response.data);
-      // // Update the state for Google Maps API
 
-      const coordinates = response.data.routes[0].geometry.coordinates; // Assuming GeoJSON format
-      const path = coordinates.map(([lng, lat]) => ({ lat, lng })); // Convert to Google Maps format
-      setGoogleMapRoute(path); // Update the Google Maps route state
+      const routeData = response.data;
+
+      if (
+        routeData.routes &&
+        routeData.routes.length > 0 &&
+        routeData.routes[0].overview_polyline
+      ) {
+        const encodedPath = routeData.routes[0].overview_polyline.points;
+        const decodedPath = polyline.decode(encodedPath).map(([lat, lng]) => ({
+          lat,
+          lng,
+        }));
+        setGoogleMapRoute(decodedPath);
+      } else {
+        console.error("No polyline found in response.");
+      }
+
+      const markerPromises = stops.map((stop) => getCoordinates(stop));
+      const markerPositions = await Promise.all(markerPromises);
+      setMarkers(markerPositions.filter((pos) => pos !== null));
     } catch (error) {
       console.error("Error fetching route:", error);
     }
@@ -244,45 +275,44 @@ function App() {
                 Send
               </button>
             </div>
-             <section className="section">
-            <h2 className="section-title">Top Recommendations</h2>
-            {llmRecommendations.length > 0 ? (
-              <ul className="recommendations-list">
-                {llmRecommendations.map((place, index) => (
-                  <li key={index} className="recommendation-item">
-                    <h3>{place.name}</h3>
-                    <p>
-                      <strong>Category:</strong> {place.category}
-                    </p>
-                    <p>
-                      <strong>Estimated Time:</strong>{" "}
-                      {place.estimated_time_minutes} minutes
-                    </p>
-                    <p>
-                      <strong>Description:</strong> {place.description}
-                    </p>
-                    <p>
-                      <strong>Address:</strong> {place.address}
-                    </p>
-                    <p>
-                      <strong>Worth Visiting:</strong> {place.worth_visiting}
-                    </p>
-                    <button
-                      className="button small"
-                      onClick={() => addPlaceToStops(place)}
-                    >
-                      Add to Stops
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>
-                No recommendations yet. Use the LLM chat to get suggestions.
-              </p>
-            )}
-          </section>
-        
+            <section className="section">
+              <h2 className="section-title">Top Recommendations</h2>
+              {llmRecommendations.length > 0 ? (
+                <ul className="recommendations-list">
+                  {llmRecommendations.map((place, index) => (
+                    <li key={index} className="recommendation-item">
+                      <h3>{place.name}</h3>
+                      <p>
+                        <strong>Category:</strong> {place.category}
+                      </p>
+                      <p>
+                        <strong>Estimated Time:</strong>{" "}
+                        {place.estimated_time_minutes} minutes
+                      </p>
+                      <p>
+                        <strong>Description:</strong> {place.description}
+                      </p>
+                      <p>
+                        <strong>Address:</strong> {place.address}
+                      </p>
+                      <p>
+                        <strong>Worth Visiting:</strong> {place.worth_visiting}
+                      </p>
+                      <button
+                        className="button small"
+                        onClick={() => addPlaceToStops(place)}
+                      >
+                        Add to Stops
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>
+                  No recommendations yet. Use the LLM chat to get suggestions.
+                </p>
+              )}
+            </section>
           </section>
 
           {/* Display Found Places */}
@@ -327,12 +357,15 @@ function App() {
                 googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
               >
                 <GoogleMap
-                  key={mapKey} // Adding key to force re-render
+                  key={mapKey}
                   mapContainerStyle={containerStyle}
                   center={center}
                   zoom={10}
                 >
                   <Marker position={center} />
+                  {markers.map((marker, index) => (
+                    <Marker key={index} position={marker} />
+                  ))}
                   {googleMapRoute.length > 0 && (
                     <Polyline
                       path={googleMapRoute}
@@ -362,7 +395,6 @@ function App() {
           </section>
 
           {/* Recommendations Section */}
-         
         </div>
       </main>
     </div>
