@@ -2,11 +2,10 @@
 
 ## Overview
 
-This project is a full-stack web application for planning road trips with intelligent stop recommendations. It leverages AI and mapping APIs to suggest optimal places to visit along your route or near your current location.
+This project is a full-stack web application for planning road trips with intelligent stop recommendations. It leverages AI and mapping APIs to suggest optimal places to visit along your route or near your current location. It also allows user the generate itineraries based on user requests and visualize it on a map
 
 - **Frontend:** React.js (see [`frontend/README.md`](frontend/README.md))
 - **Backend:** Flask (see [`backend/README.md`](backend/README.md))
-- **Containerization:** Docker Compose for easy setup
 
 ## Features
 
@@ -15,14 +14,14 @@ This project is a full-stack web application for planning road trips with intell
 - Visualize routes and stops on an interactive map
 - Export routes to Google Maps
 
+
 ## Directory Structure
 
 ```
 .
 ├── frontend/   # React app (UI, map, user interaction)
-├── backend/    # Flask API (routing, AI, integrations)
-├── tests/      # (if present) Test scripts
-├── docker-compose.yml
+├── backend/    # Flask API (routing, AI, LLM)
+├── tests/      # Test Scripts
 └── README.md
 ```
 
@@ -30,16 +29,7 @@ This project is a full-stack web application for planning road trips with intell
 
 ### Prerequisites
 
-- [Docker](https://www.docker.com/products/docker-desktop) (recommended)
-- Or: Node.js, Python 3.8+, pip (for manual setup)
-
-### Quick Start (with Docker)
-
-1. Clone the repository
-2. In the project root, run:
-   - Start backend and frontend: `docker-compose up`
-   - Rebuild everything: `docker-compose up --build`
-3. Access the app at [http://localhost:3000](http://localhost:3000)
+- Node.js, Python 3.8+, pip (for manual setup)
 
 ### Manual Setup
 
@@ -84,9 +74,11 @@ REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_key
 - `npm run build` – Build for production
 - `npm test` – Run tests
 
+### Technical 
+
 ## Contributors
 
-- Keshav Balaji - Backend
-- Kyle Zhao - Backend
-- Divij Garg - Frontend
-- Jash Nanda - Frontend
+- Keshav Balaji - Backend 
+- Kyle Zhao - Backend 
+- Divij Garg - Frontend 
+- Jash Nanda - Frontend 

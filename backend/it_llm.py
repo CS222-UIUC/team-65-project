@@ -3,12 +3,10 @@
 # from langchain.chains import ConversationChain
 # from langchain.prompts import PromptTemplate
 
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import ChatOpenAI
 from langchain_community.chat_models import ChatOllama
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_community.vectorstores import FAISS
-from langchain.memory import ConversationBufferMemory
 
 import os
 import json
@@ -23,13 +21,6 @@ class LLMService:
             api_key=os.getenv("OPENAI_API_KEY")
         )
         self.output_parser = StrOutputParser()
-        self.embeddings = OpenAIEmbeddings()
-        self.memory = ConversationBufferMemory(
-            memory_key="chat_history",
-            return_messages=True
-        )
-        self.current_itinerary = None
-        self.vector_store = None
 
         self.itinerary_template = """
         You are a travel planning assistant. Create a detailed itinerary based on the following request:
@@ -55,35 +46,12 @@ class LLMService:
         """
 
         self.update_template = """
-        You are a travel planning assistant. The user wants to modify their existing itinerary.
-        
-        Current Itinerary: {current_itinerary}
+        Based on the following request, modify the existing itinerary:
         User Request: {user_request}
-        Chat History: {chat_history}
-        
-        Important Instructions:
-        1. ONLY modify the specific aspects of the itinerary that the user has requested to change
-        2. Keep all other activities, times, and details exactly as they are
-        3. If adding new activities, try to fit them into existing time slots without disrupting other activities
-        4. If removing activities, maintain the flow and timing of the remaining activities
-        5. If modifying times, only adjust the affected activities and maintain the overall schedule
-        6. Preserve all IDs, types, and other metadata for unchanged activities
+        Current Itinerary: {current_itinerary}
         
         Return the updated itinerary as a JSON array with the same structure.
-        Make sure to maintain the same format and include all required fields.
         """
-
-    def _update_vector_store(self, itinerary: List[Dict]):
-        """Update the vector store with the current itinerary"""
-        if itinerary:
-            # Convert itinerary to text for embedding
-            itinerary_text = json.dumps(itinerary, indent=2)
-            # Create or update vector store
-            self.vector_store = FAISS.from_texts([itinerary_text], self.embeddings)
-            self.current_itinerary = itinerary
-        else:
-            self.vector_store = None
-            self.current_itinerary = None
 
     def generate_itinerary(
         self,
@@ -92,10 +60,6 @@ class LLMService:
         end_location: Optional[str] = None,
         current_location: Optional[Dict] = None
     ) -> List[Dict]:
-        # Clear memory if this is a new itinerary request
-        if not self.current_itinerary:
-            self.memory.clear()
-        
         prompt = ChatPromptTemplate.from_template(self.itinerary_template)
         messages = prompt.format_messages(
             user_request=user_request,
@@ -103,20 +67,15 @@ class LLMService:
             end_location=end_location or "Not specified",
             current_location=json.dumps(current_location) if current_location else "Not specified"
         )
-        
-        # Add to memory
-        self.memory.save_context({"input": user_request}, {"output": "Generating new itinerary"})
-        
         response = self.llm.invoke(messages)
+        # Extract the content from AIMessage
         text = response.content if hasattr(response, 'content') else str(response)
-        
         try:
-            itinerary = json.loads(text)
-            self._update_vector_store(itinerary)
-            return itinerary
+            return json.loads(text)
         except json.JSONDecodeError as e:
             print(f"Error parsing LLM response: {e}")
             print(f"Raw response: {text}")
+            # Return a default itinerary if parsing fails
             return [
                 {
                     "id": "1",
@@ -134,47 +93,25 @@ class LLMService:
         user_request: str,
         current_itinerary: List[Dict]
     ) -> List[Dict]:
-        if not self.current_itinerary:
-            return self.generate_itinerary(user_request)
-            
-        # Add to memory
-        self.memory.save_context({"input": user_request}, {"output": "Updating itinerary"})
-        
         prompt = ChatPromptTemplate.from_template(self.update_template)
         messages = prompt.format_messages(
             user_request=user_request,
-            current_itinerary=json.dumps(current_itinerary),
-            chat_history=self.memory.buffer
+            current_itinerary=json.dumps(current_itinerary)
         )
-        
         response = self.llm.invoke(messages)
+        # Extract the content from AIMessage
         text = response.content if hasattr(response, 'content') else str(response)
-        
         try:
-            updated_itinerary = json.loads(text)
-            # Verify that only requested changes were made
-            if len(updated_itinerary) != len(current_itinerary):
-                print("Warning: Itinerary length changed unexpectedly")
-                # Keep original items that weren't meant to be changed
-                for i, item in enumerate(current_itinerary):
-                    if i < len(updated_itinerary):
-                        # Only update if the item was meant to be changed
-                        if item.get("id") != updated_itinerary[i].get("id"):
-                            updated_itinerary.insert(i, item)
-                    else:
-                        updated_itinerary.append(item)
-            
-            self._update_vector_store(updated_itinerary)
-            return updated_itinerary
+            return json.loads(text)
         except json.JSONDecodeError as e:
             print(f"Error parsing LLM response: {e}")
             print(f"Raw response: {text}")
             return current_itinerary
-
+        
     def clear_itinerary(self):
         """Clear the current itinerary and memory"""
-        self._update_vector_store(None)
-        self.memory.clear()
+        #self._update_vector_store(None)
+        #self.memory.clear()
         return []
 
 
