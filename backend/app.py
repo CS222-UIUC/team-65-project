@@ -184,7 +184,7 @@ def get_route():
         return jsonify({"error": "Failed to fetch route from Google Maps API"}), 500
 
     return jsonify(response.json())
-app.route("/clear_itinerary", methods=["POST"])
+@app.route("/clear_itinerary", methods=["POST"])
 def clear_itinerary():
     try:
         llm_service.clear_itinerary()
